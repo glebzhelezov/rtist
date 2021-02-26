@@ -4,7 +4,7 @@
 #include "scores.h"
 #include "lookup_table.h"
 
-int main() {
+int main_test() {
     int left_sets[] = {5,2,15,4,3,1,2,4,2,7,5};
     int right_sets[] = {8,13,16,9,12,12,9,11,5,8,10};
     int weights[] = {10,37,50,12,5,15,5,5,1,1,2};
