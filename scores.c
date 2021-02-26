@@ -16,6 +16,10 @@ int main() {
     get_compressed_score_representation(left_sets, right_sets, weights,
             n_biparts, n_species, &scores);
 
+    /* Should probably create a separate function like,
+     * fill_compressed_rep_matrix( .... ) so it can be called directly
+     * from Python with NumPy arrays. */
+
     printf("[");
     for (int i=0; i<2*3*3*3*3; i++) {
         printf("%d, ", scores[i]);
