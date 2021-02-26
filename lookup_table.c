@@ -15,14 +15,12 @@ int ipow(int a, int b) {
     return product;
 }
 
-/* Finds the matrix two2three such that two2three[(b_n ... n_0)_2] =
- * b_n 3^n + ... + b_0, i.e. keep the coefficients but switch the base
- * from base 2 to base 3. */
-void calculate_two2three(int **two2three, int n) {
+void fill_two2three(int *two2three, int n) {
     /* Create a lookup table for powers of three. */
     int *pows = malloc(n*sizeof(int));
     if (pows == NULL) {
-        printf("!!!\n");
+        printf("Failed to create pows array.\n");
+        return;
     }
 
     for (int i=0; i<n; i++) {
@@ -32,10 +30,6 @@ void calculate_two2three(int **two2three, int n) {
     /* The largest number we have to deal with is:
      * 111..(n ones)...1 = 2^n - 1 */
     int array_size = ipow(2, n);
-    *two2three = malloc(array_size*sizeof(int));
-    if (two2three == NULL) {
-        printf("!!!!\n");
-    }
 
     for (int i=0; i<array_size; i++) {
         int tot = 0;
@@ -47,12 +41,29 @@ void calculate_two2three(int **two2three, int n) {
             /* Unset the least set bit. */
             k = k&(k-1);
         }
-        (*two2three)[i] = tot;
+        two2three[i] = tot;
     }
 
     /* Free powers lookup table. */
-    printf("%p\n",pows);
     free(pows);
+
+    return;
+}
+
+/* Finds the matrix two2three such that two2three[(b_n ... n_0)_2] =
+ * b_n 3^n + ... + b_0, i.e. keep the coefficients but switch the base
+ * from base 2 to base 3. */
+void calculate_two2three(int **two2three, int n) {
+    /* The largest number we have to deal with is:
+     * 111..(n ones)...1 = 2^n - 1 */
+    int array_size = ipow(2, n);
+    *two2three = malloc(array_size*sizeof(int));
+    if (two2three == NULL) {
+        printf("Failed to allocate two2three array.\n");
+        return;
+    }
+
+    fill_two2three(*two2three, n);
 
     return;
 }

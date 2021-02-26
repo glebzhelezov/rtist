@@ -25,7 +25,6 @@ int main() {
         printf("%d, ", scores[i]);
     }
     printf("]");
-    printf("%p\n", scores);
     free(scores);
 
     return 0;
@@ -61,28 +60,14 @@ int n_common_triplets(int a, int b, int c, int d) {
 }
 
 
-void get_compressed_score_representation(
+void fill_compressed_score_representation(
         int *left_sets,
         int *right_sets,
         int *weights,
         int n_biparts,
         int n_species,
-        int **scores) {
-
-    /* Calculate the two2three arrya necessary for quick bipart encoding. */
-    int *two2three;
-    calculate_two2three(&two2three, n_species);
-
-    /*int scores_size = (int)(pow(3, n_species-1) + 0.5);*/
-    int scores_size = 2*ipow(3, n_species-1);
-    /*int *scores;*/
-    *scores = calloc(scores_size, sizeof(int));
-    if (scores == NULL) {
-        printf("!!!!!!!!!\n");
-    }
-
-    //int i, a, b, weight, kernel, a_prime, b_prime, k_1, k_2, x, y;
-
+        int *scores, /* Must be allocated with 0 in each entry. */
+        int *two2three) {
     /* Iterate over all the (sub)bi-partitions. */
     for (int i=0; i<n_biparts; i++) {
         /* 1<<n_species == 2^n_species; */
@@ -120,17 +105,22 @@ void get_compressed_score_representation(
                                     x, y, a, b);
                             /* Update precomputed scores. */
                             int rep = compressed_rep(x, y, two2three);
-                            (*scores)[rep] += n_triplets * weights[i];
+                            scores[rep] += n_triplets * weights[i];
 
-                            /* Update value of k2 */
+                            /* This is necessary to break out of an endless
+                             * loop! */
                             if (k2 == 0) {
                                 break;
                             }
+                            /* Update value of k2 */
                             k2 = (kernel-k1) & (k2-1);
                         }
+                        /* This is necessary to break out of an endless
+                         * loop! */
                         if (k1 == 0) {
                             break;
                         }
+                        /* Update value of k1 */
                         k1 = kernel & (k1-1);
                     }
                 }
@@ -140,7 +130,33 @@ void get_compressed_score_representation(
         }
     }
 
-    printf("%p\n", two2three);
+}
+
+
+void get_compressed_score_representation(
+        int *left_sets,
+        int *right_sets,
+        int *weights,
+        int n_biparts,
+        int n_species,
+        int **scores) {
+
+    /* Calculate the two2three arrya necessary for quick bipart encoding. */
+    int *two2three;
+    calculate_two2three(&two2three, n_species);
+
+    /*int scores_size = (int)(pow(3, n_species-1) + 0.5);*/
+    int scores_size = 2*ipow(3, n_species-1);
+    /*int *scores;*/
+    *scores = calloc(scores_size, sizeof(int));
+    if (scores == NULL) {
+        printf("Failed to create scores array.\n");
+        return;
+    }
+
+    fill_compressed_score_representation(left_sets, right_sets, weights,
+            n_biparts, n_species, *scores, two2three);
+
     free(two2three);
 
     return;
