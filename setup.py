@@ -4,10 +4,10 @@ from Cython.Build import cythonize
 
 comb2_extension = Extension(
         name='comb2',
-        sources=['test.pyx'],
+        sources=['triplet_omp_py.pyx'],
         libraries=['ctriplet'],
-        library_dirs=['.'],
-        include_dirs=['.'],
+        library_dirs=['lib'],
+        include_dirs=['lib'],
         extra_compile_args=['-fopenmp'],
         extra_link_args=['-fopenmp'],
         )
