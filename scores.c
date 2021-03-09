@@ -16,6 +16,12 @@ int main_test() {
     get_compressed_score_representation(left_sets, right_sets, weights,
             n_biparts, n_species, &scores);
 
+    int left, right;
+    int *two2three;
+    calculate_two2three(&two2three, n_species);
+    /*get_optimal_bipart(ipow(2,n_species)-1, &left, &right, scores, two2three);*/
+
+    /*printf("Best decomposition: %d %d\n", left, right);*/
     /* Should probably create a separate function like,
      * fill_compressed_rep_matrix( .... ) so it can be called directly
      * from Python with NumPy arrays. */
@@ -26,6 +32,7 @@ int main_test() {
     }
     printf("]");
     free(scores);
+    free(two2three);
 
     return 0;
 }
@@ -161,3 +168,33 @@ void get_compressed_score_representation(
 
     return;
 }
+
+
+/* void get_optimal_bipart(int set, int *left, int *right, int *scores, 
+        int *two2three) {
+    if (__builtin_popcount(set)<3) {
+        *left=0;
+        *right=set;
+    }
+
+    int max = -1;
+    int left_candidate, right_candidate;
+
+    for (int subset=set&(set-1); subset=set&(subset-1); subset>0) {
+        int complement = set-subset;
+        if (subset<complement) {
+            int bipart_index = compressed_rep(subset, complement, two2three);
+            if (scores[bipart_index]>max) {
+                max = scores[bipart_index];
+                left_candidate = subset;
+                right_candidate = complement;
+            }
+        }
+    }
+
+    *left = left_candidate;
+    *right = right_candidate;
+
+    return;
+}
+*/

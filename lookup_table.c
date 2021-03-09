@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "scores.h"
+#include "scores_omp.h"
 #include "lookup_table.h"
 
 /* It's probably not necessary to optimize this, since we call this function
