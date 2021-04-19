@@ -4,48 +4,51 @@
 #include "scores.h"
 #include "lookup_table.h"
 
-int main_test() {
-    int left_sets[] = {5,2,15,4,3,1,2,4,2,7,5};
-    int right_sets[] = {8,13,16,9,12,12,9,11,5,8,10};
-    int weights[] = {10,37,50,12,5,15,5,5,1,1,2};
-    int n_biparts = 11;
-    int n_species = 5;
+/* The functions in this generate generate the weights of all the
+ * bipartitions present in the GTs. */
 
-    int *scores;
-    /* Do the calculations B-) */
-    get_compressed_score_representation(left_sets, right_sets, weights,
-            n_biparts, n_species, &scores);
-
-    int left, right;
-    int *two2three;
-    calculate_two2three(&two2three, n_species);
-    /*get_optimal_bipart(ipow(2,n_species)-1, &left, &right, scores, two2three);*/
-
-    /*printf("Best decomposition: %d %d\n", left, right);*/
-    /* Should probably create a separate function like,
-     * fill_compressed_rep_matrix( .... ) so it can be called directly
-     * from Python with NumPy arrays. */
-
-    printf("[");
-    for (int i=0; i<2*3*3*3*3; i++) {
-        printf("%d, ", scores[i]);
-    }
-    printf("]");
-    free(scores);
-    free(two2three);
-
-    return 0;
-}
-
-
-/* Calculate n choose 2. */
-int combinations_2(int n) {
-    if (n >= 2) {
-        return (n*(n-1))/2;
-    } else {
-        return 0;
-    }
-}
+// /* This is just for testing. */
+// int main_test() {
+//     int left_sets[] = {5,2,15,4,3,1,2,4,2,7,5};
+//     int right_sets[] = {8,13,16,9,12,12,9,11,5,8,10};
+//     int weights[] = {10,37,50,12,5,15,5,5,1,1,2};
+//     int n_biparts = 11;
+//     int n_species = 5;
+// 
+//     int *scores;
+//     /* Do the calculations B-) */
+//     get_compressed_score_representation(left_sets, right_sets, weights,
+//             n_biparts, n_species, &scores);
+// 
+//     int left, right;
+//     int *two2three;
+//     calculate_two2three(&two2three, n_species);
+//     /*get_optimal_bipart(ipow(2,n_species)-1, &left, &right, scores, two2three);*/
+// 
+//     /*printf("Best decomposition: %d %d\n", left, right);*/
+//     /* Should probably create a separate function like,
+//      * fill_compressed_rep_matrix( .... ) so it can be called directly
+//      * from Python with NumPy arrays. */
+// 
+//     printf("[");
+//     for (int i=0; i<2*3*3*3*3; i++) {
+//         printf("%d, ", scores[i]);
+//     }
+//     printf("]");
+//     free(scores);
+//     free(two2three);
+// 
+//     return 0;
+// }
+// 
+// /* Calculate n choose 2. */
+// int combinations_2(int n) {
+//     if (n >= 2) {
+//         return (n*(n-1))/2;
+//     } else {
+//         return 0;
+//     }
+// }
 
 
 

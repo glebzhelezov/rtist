@@ -8,5 +8,9 @@ comb2: setup.py triplet_omp_py.pyx $(LIB_DIR)/libctriplet.a
 $(LIB_DIR)/libctriplet.a:
 	make -C $(LIB_DIR) libctriplet.a
 
-clean:
-	rm *.so
+clean: libclean
+	rm -fv *.so
+#	rm -fv libctriplet.a
+
+libclean:
+	make -C $(LIB_DIR) clean

@@ -3,6 +3,9 @@
 #include "scores_omp.h"
 #include "lookup_table.h"
 
+/* The functions in this file basically allow us to work with a base-3
+ * representation of a tripartition. */
+
 /* It's probably not necessary to optimize this, since we call this function
  * just a few times. */
 int ipow(int a, int b) {
