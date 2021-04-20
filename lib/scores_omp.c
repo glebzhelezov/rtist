@@ -14,8 +14,9 @@ int main() {
 
     int *scores;
     /* Do the calculations B-) */
+    int n_threads = 1;
     get_compressed_score_representation(left_sets, right_sets, weights,
-            n_biparts, n_species, &scores);
+            n_biparts, n_species, &scores, n_threads);
 
     int left, right;
     int *two2three;
@@ -112,9 +113,10 @@ void fill_compressed_score_representation(
         int n_biparts,
         int n_species,
         int *scores, /* Must be allocated with 0 in each entry. */
-        int *two2three) {
+        int *two2three,
+        int n_threads) {
     /* Iterate over all the (sub)bi-partitions. */
-#pragma omp parallel
+#pragma omp parallel num_threads ( n_threads )
     {
         int *scores_private = calloc(2*ipow(3,n_species-1), sizeof(int));
 #pragma omp for schedule(runtime)
@@ -187,7 +189,8 @@ void get_compressed_score_representation(
         int *weights,
         int n_biparts,
         int n_species,
-        int **scores) {
+        int **scores,
+        int n_threads) {
 
     /* Calculate the two2three arrya necessary for quick bipart encoding. */
     int *two2three;
@@ -203,7 +206,7 @@ void get_compressed_score_representation(
     }
 
     fill_compressed_score_representation(left_sets, right_sets, weights,
-            n_biparts, n_species, *scores, two2three);
+            n_biparts, n_species, *scores, two2three, n_threads);
 
     free(two2three);
 

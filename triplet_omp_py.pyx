@@ -9,6 +9,7 @@ cdef extern from "scores_omp.h" nogil:
             int n_species,
             int *scores,
             int *two2three,
+            int n_threads,
             )
 #    void get_optimal_bipart(int full_set, int *left, int *right, int *scores, 
 #            int *two2three)
@@ -31,7 +32,8 @@ def create_two2three(n):
 
     return ar
 
-def py_compressed_score_rep(weights, n_species):
+def py_compressed_score_rep(weights, n_species, n_threads=8):
+    """Test"""
     n_biparts = len(weights)
     ls = np.zeros(n_biparts, dtype=np.intc)
     rs = np.zeros(n_biparts, dtype=np.intc)
@@ -65,6 +67,7 @@ def py_compressed_score_rep(weights, n_species):
             n_species,
             &scores_memview[0],
             &two2three_memview[0],
+            n_threads,
             )
 
     return scores
