@@ -1,17 +1,17 @@
-cdef extern from "scores_omp.h":
+cdef extern from "weights_omp.h":
     int combinations_2(int n)
-cdef extern from "scores_omp.h" nogil:
-    void fill_compressed_score_representation(
+cdef extern from "weights_omp.h" nogil:
+    void fill_compressed_weight_representation(
             int *left_sets,
             int *right_sets,
-            int *weights,
+            int *bipart_weights,
             int n_biparts,
             int n_species,
-            int *scores,
+            int *weights,
             int *two2three,
             int n_threads,
             )
-#    void get_optimal_bipart(int full_set, int *left, int *right, int *scores, 
+#    void get_optimal_bipart(int full_set, int *left, int *right, int *weights, 
 #            int *two2three)
 cdef extern from "lookup_table.h":
     void fill_two2three(int *two2three, int n)
@@ -32,48 +32,48 @@ def create_two2three(n):
 
     return ar
 
-def py_compressed_score_rep(weights, n_species, n_threads=8):
+def py_compressed_weight_rep(bipart_weights, n_species, n_threads=8):
     """Test"""
-    n_biparts = len(weights)
+    n_biparts = len(bipart_weights)
     ls = np.zeros(n_biparts, dtype=np.intc)
     rs = np.zeros(n_biparts, dtype=np.intc)
     ws = np.zeros(n_biparts, dtype=np.intc)
 
-    for (i, ((l,r),w)) in enumerate(weights.items()):
+    for (i, ((l,r),w)) in enumerate(bipart_weights.items()):
         ls[i]=l
         rs[i]=r
         ws[i]=w
 
     two2three = create_two2three(n_species)
 
-    scores = np.zeros(2*3**(n_species-1), dtype=np.intc)
+    weights = np.zeros(2*3**(n_species-1), dtype=np.intc)
     
-    arrays_to_c = [ls, rs, ws, scores]
-    for ar in [ls, rs, ws, scores]:
+    arrays_to_c = [ls, rs, ws, weights]
+    for ar in [ls, rs, ws, weights]:
         if not ar.flags['C_CONTIGUOUS']:
             ar = np.ascontiguousarray(ar)
 
-    cdef int[::1] scores_memview = scores
+    cdef int[::1] weights_memview = weights
     cdef int[::1] two2three_memview = two2three
     cdef int[::1] ls_memview = ls
     cdef int[::1] rs_memview = rs
     cdef int[::1] ws_memview = ws
 
-    fill_compressed_score_representation(
+    fill_compressed_weight_representation(
             &ls_memview[0],
             &rs_memview[0],
             &ws_memview[0], 
             n_biparts,
             n_species,
-            &scores_memview[0],
+            &weights_memview[0],
             &two2three_memview[0],
             n_threads,
             )
 
-    return scores
+    return weights
 
-#def optimal_bipart(int input_set, scores, two2three):
-#    cdef int[::1] scores_memview = scores
+#def optimal_bipart(int input_set, weights, two2three):
+#    cdef int[::1] weights_memview = weights
 #    cdef int[::1] two2three_memview = two2three
 #    cdef int left
 #    cdef int right
@@ -81,7 +81,7 @@ def py_compressed_score_rep(weights, n_species, n_threads=8):
 #            input_set,
 #            &left,
 #            &right,
-#            &scores_memview[0],
+#            &weights_memview[0],
 #            &two2three_memview[0]
 #            )
 #

@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "scores_omp.h"
+#include "weights_omp.h"
 #include "lookup_table.h"
 
 /* The functions in this file basically allow us to work with a base-3
