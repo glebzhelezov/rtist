@@ -19,9 +19,13 @@ cdef extern from "lookup_table.h":
 import numpy as np
 
 def py_combinations_2(n):
+    """Return n choose 2."""
     return combinations_2(n)
 
 def create_two2three(n):
+    """Create an array whose ith element is the number i, with 3^n instead
+    of 2^n in the binary expansion of."""
+
     ar = np.zeros(2**n, dtype=np.intc)
     if not ar.flags['C_CONTIGUOUS']:
         ar = np.ascontiguousarray(ar)
@@ -33,7 +37,7 @@ def create_two2three(n):
     return ar
 
 def py_compressed_weight_rep(bipart_weights, n_species, n_threads=8):
-    """Test"""
+    """Computes the compressed representation of the bipartition weights."""
     n_biparts = len(bipart_weights)
     ls = np.zeros(n_biparts, dtype=np.intc)
     rs = np.zeros(n_biparts, dtype=np.intc)
@@ -71,18 +75,3 @@ def py_compressed_weight_rep(bipart_weights, n_species, n_threads=8):
             )
 
     return weights
-
-#def optimal_bipart(int input_set, weights, two2three):
-#    cdef int[::1] weights_memview = weights
-#    cdef int[::1] two2three_memview = two2three
-#    cdef int left
-#    cdef int right
-#    get_optimal_bipart(
-#            input_set,
-#            &left,
-#            &right,
-#            &weights_memview[0],
-#            &two2three_memview[0]
-#            )
-#
-#    return left, right
