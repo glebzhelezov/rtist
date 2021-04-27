@@ -1,14 +1,8 @@
-#pyximport.install(language_level=3)
-
-#import pyximport
 import re
 import comb2
-#import numpy as np
-
-#from gmpy2 import popcount
-from bitsnbobs import popcount, get_binary_subsets, init_bipart_rep_function
 import snoob
-#from triplet import triplet_cy
+from bitsnbobs import popcount, get_binary_subsets, init_bipart_rep_function
+
 
 def simplify_nwk(s):
     """Returns Newick representation with only leaf names."""
@@ -27,7 +21,9 @@ def get_names(gts_nwks):
     """Gets the unique names in a list of Newick strings."""
     names = set([])
     for i, gt_nwk in enumerate(gts_nwks):
-        tokens = re.findall(r"([(,])([a-zA-Z0-9]*)(?::\d*(\.\d*)?)?(?=[,)])", gt_nwk)
+        tokens = re.findall(
+            r"([(,])([a-zA-Z0-9]*)(?::\d*(\.\d*)?)?(?=[,)])", gt_nwk
+        )
         cur_names = [t[1] for t in tokens]
         if "" in cur_names:
             raise SyntaxError(
@@ -105,8 +101,8 @@ def get_stack(bipartition_weights, n_species):
     # The "stack" gives the best weight of each subset
     f = init_bipart_rep_function(n_species)
     # Score of each triple
-    stack = comb2.zero_array(2**n_species, 'i')
-    #stack = np.zeros(2 ** n_species, dtype=np.intc)
+    stack = comb2.zero_array(2 ** n_species, "i")
+    # stack = np.zeros(2 ** n_species, dtype=np.intc)
     # Each subset has a list of the maximizing bipartitions
     best_biparts = [[] for _ in range(2 ** n_species)]
 
@@ -146,7 +142,11 @@ def process_nwks(nwks, n_threads=1):
     names, dictionary, reverse_dictionary = get_names(nwks_simplified)
     # Warn user of impeding doom
     if len(dictionary) > 15:
-        print("Warning: attempting to find exact tree with {} tips. The computation might run out of memory, or take an unreasonable amount of time.".format(len(dictionary)))
+        print(
+            "Warning: attempting to find exact tree with {} tips. The computation might run out of memory, or take an unreasonable amount of time.".format(
+                len(dictionary)
+            )
+        )
     # Get the weights of the bipartitions in the GTs
     weights = get_weights(nwks_simplified, dictionary)
     # Get the number of species across all the GTs
@@ -178,8 +178,12 @@ def _get_all_trees(x, dictionary, reverse_dictionary, best_biparts):
         all_trees.append("({},{})".format(*names))
     else:
         for (a, b) in best_biparts[x]:
-            a_trees = _get_all_trees(a, dictionary, reverse_dictionary, best_biparts)
-            b_trees = _get_all_trees(b, dictionary, reverse_dictionary, best_biparts)
+            a_trees = _get_all_trees(
+                a, dictionary, reverse_dictionary, best_biparts
+            )
+            b_trees = _get_all_trees(
+                b, dictionary, reverse_dictionary, best_biparts
+            )
 
             for a_prime in a_trees:
                 for b_prime in b_trees:
@@ -190,7 +194,8 @@ def _get_all_trees(x, dictionary, reverse_dictionary, best_biparts):
 
 def get_all_trees(x, dictionary, reverse_dictionary, best_biparts):
     return [
-        t + ";" for t in _get_all_trees(x, dictionary, reverse_dictionary, best_biparts)
+        t + ";"
+        for t in _get_all_trees(x, dictionary, reverse_dictionary, best_biparts)
     ]
 
 
@@ -198,7 +203,6 @@ def median_triplet_trees(nwks, n_threads=1):
     triplet_weights, dictionary, reverse_dictionary = process_nwks(
         nwks, n_threads=n_threads
     )
-
 
     stack, best_biparts = get_stack(triplet_weights, len(dictionary))
     # bitset representation of all the tips
