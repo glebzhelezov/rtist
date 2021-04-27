@@ -200,8 +200,7 @@ def get_all_trees(x, dictionary, reverse_dictionary, best_biparts):
     return [
         t + ";"
         for t in _get_all_trees(x, dictionary, reverse_dictionary, best_biparts)
-
-
+        ]
 
 def median_triplet_trees(nwks, n_threads=1):
     triplet_weights, dictionary, reverse_dictionary = process_nwks(

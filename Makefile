@@ -1,16 +1,20 @@
 LIB_DIR = lib
+VERSION := $(shell git describe --tags)
 
 default: binary
 
 binary: comb2
 	pyinstaller -F --hidden-import array --hidden-import cysignals median_triplet.py
 
-comb2: setup.py triplet_omp_py.pyx $(LIB_DIR)/libctriplet.a
+comb2: setup.py triplet_omp_py.pyx $(LIB_DIR)/libctriplet.a tags
 	python setup.py build_ext --inplace
 #	python setup.py develop
 
 $(LIB_DIR)/libctriplet.a:
 	make -C $(LIB_DIR) libctriplet.a
+
+tags:
+	echo "__version__ = \"$(VERSION)\"" > median_triplet_version.py
 
 cleanall: clean libcleanall
 	rm -rfv dist

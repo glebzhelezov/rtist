@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import argparse
 import sys
+import median_triplet_version
 from os import cpu_count
 from os.path import basename
 from median_tree_reconstruction import median_triplet_trees
@@ -26,6 +27,7 @@ def main():
         type=str,
         help="input file with one Newick string per line",
     )
+    parser.add_argument('-v', '--version', action='version', version=median_triplet_version.__version__)
     parser.add_argument(
         "-t",
         "--threads",
@@ -42,17 +44,9 @@ def main():
         help="output file (warning: any existing file will be overwritten!). Defaults to out_<input file>",
         default=None,
     )
-    parser.add_argument(
-        "-v",
-        "--version",
-        action="store_true",
-        help="print out the version of this program",
-    )
 
     result = parser.parse_args()
 
-    if result.version:
-        print("Median Triplet, version 0.01 (alpha).")
     in_file = result.i
     out_file = result.outfile
     n_threads = result.threads
