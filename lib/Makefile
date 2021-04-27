@@ -6,10 +6,10 @@ libctriplet.a: lookup_table.o weights_omp.o
 	ar rcs $@ $^
 
 lookup_table.o: lookup_table.c lookup_table.h
-	$(CC) -c -Ofast -mpopcnt -fopenmp $<
+	$(CC) -c -Ofast -fopenmp -ffast-math -march=native $<
 
 weights_omp.o: weights_omp.c weights_omp.h
-	$(CC) -c -Ofast -mpopcnt -fopenmp $<
+	$(CC) -c -Ofast -fopenmp -ffast-math -march=native $<
 
 oclean:
 	rm -fv lookup_table.o weights_omp.o 

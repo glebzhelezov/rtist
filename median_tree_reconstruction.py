@@ -198,5 +198,5 @@ def median_triplet_trees(nwks, n_threads=1):
     stack, best_biparts = get_stack(triplet_weights, len(dictionary))
     # bitset representation of all the tips
     x = 2 ** len(reverse_dictionary) - 1
-    print(stack[x])
+    print("Total common triplet count is {}.".format(stack[x]))
     return get_all_trees(x, dictionary, reverse_dictionary, best_biparts)
