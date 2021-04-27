@@ -2,9 +2,12 @@
 from setuptools import setup
 from distutils.extension import Extension
 from Cython.Build import cythonize
-import Cython.Compiler.Options
-Cython.Compiler.Options.annotate = True
+import cysignals
 
+compile_time_env = dict(HAVE_CYSIGNALS=False)
+# detect `cysignals`
+if cysignals is not None:
+    compile_time_env['HAVE_CYSIGNALS'] = True
 
 comb2_extension = Extension(
         name="comb2",
@@ -12,20 +15,31 @@ comb2_extension = Extension(
         libraries=["ctriplet"],
         library_dirs=["lib"],
         include_dirs=["lib"],
-        extra_compile_args=["-Ofast", "-fopenmp", "-march=native", "-ffast-math"],
+        extra_compile_args=["-Ofast", "-fopenmp", "-march=native"],
         extra_link_args=["-fopenmp"],
 ) 
 
 bitsnbobs = Extension(
         name="bitsnbobs",
         sources=["bitsnbobs.pyx"],
-        extra_compile_args=["-Ofast", "-march=native", "-ffast-math"],
+        extra_compile_args=["-Ofast", "-march=native"],
         )
 
 scipycomb = Extension(
         name="scipycomb",
         sources=["scipy_comb.pyx"],
-        extra_compile_args=["-Ofast", "-march=native", "-ffast-math"],
+        extra_compile_args=["-Ofast", "-march=native"],
         )
 
-setup(name="comb2", ext_modules=cythonize([comb2_extension, bitsnbobs, scipycomb], language_level=3, annotate=True))
+setup(
+        name="comb2",
+        ext_modules=cythonize(
+            [
+                comb2_extension,
+                bitsnbobs,
+                scipycomb,
+            ],
+            language_level=3,
+            compile_time_env=compile_time_env,
+            ),
+        )

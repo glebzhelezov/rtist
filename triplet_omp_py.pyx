@@ -1,6 +1,14 @@
 from cpython cimport array
 import array
 
+IF HAVE_CYSIGNALS:
+    from cysignals.signals cimport sig_on, sig_off
+ELSE:
+    # for non-POSIX systems
+    noop = lambda: None
+    sig_on = noop
+    sig_off = noop
+
 cdef extern from "weights_omp.h":
     int combinations_2(int n)
 cdef extern from "weights_omp.h" nogil:
@@ -68,6 +76,7 @@ def py_compressed_weight_rep(bipart_weights, n_species, n_threads=8):
     cdef int[::1] rs_memview = rs
     cdef int[::1] ws_memview = ws
 
+    sig_on()
     fill_compressed_weight_representation(
             &ls_memview[0],
             &rs_memview[0],
@@ -78,5 +87,6 @@ def py_compressed_weight_rep(bipart_weights, n_species, n_threads=8):
             &two2three_memview[0],
             n_threads,
             )
+    sig_off()
 
     return weights

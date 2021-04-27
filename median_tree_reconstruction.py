@@ -144,6 +144,9 @@ def process_nwks(nwks, n_threads=1):
     nwks_simplified = [simplify_nwk(s) for s in nwks]
     # Map each name to an integer
     names, dictionary, reverse_dictionary = get_names(nwks_simplified)
+    # Warn user of impeding doom
+    if len(dictionary) > 15:
+        print("Warning: attempting to find exact tree with {} tips. The computation might run out of memory, or take an unreasonable amount of time.".format(len(dictionary)))
     # Get the weights of the bipartitions in the GTs
     weights = get_weights(nwks_simplified, dictionary)
     # Get the number of species across all the GTs
@@ -195,6 +198,8 @@ def median_triplet_trees(nwks, n_threads=1):
     triplet_weights, dictionary, reverse_dictionary = process_nwks(
         nwks, n_threads=n_threads
     )
+
+
     stack, best_biparts = get_stack(triplet_weights, len(dictionary))
     # bitset representation of all the tips
     x = 2 ** len(reverse_dictionary) - 1
