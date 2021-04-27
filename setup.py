@@ -12,7 +12,7 @@ if cysignals is not None:
 comb2_extension = Extension(
     name="comb2",
     sources=["triplet_omp_py.pyx"],
-    libraries=["ctriplet"],
+    libraries=["ctriplet", "ncurses"],
     library_dirs=["lib"],
     include_dirs=["lib"],
     extra_compile_args=["-Ofast", "-fopenmp", "-march=native"],

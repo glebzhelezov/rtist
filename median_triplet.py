@@ -4,6 +4,7 @@ import sys
 from os import cpu_count
 from os.path import basename
 from median_tree_reconstruction import median_triplet_trees
+from Newick_Validator import is_newick
 
 # Trick by Steven Berthard
 # https://groups.google.com/g/argparse-users/c/LazV_tEQvQw
@@ -57,23 +58,30 @@ def main():
     if n_threads is None:
         n_threads = 1
 
-    # This should be refactored, but will work for now.
-    with open(in_file, "r") as f:
-        nwks = [line.strip() for line in f]
-
     print(
         "Reading Newick strings from {}.\nOutputting result to {}.\nMax number of threads set to {}.\n".format(
             in_file, out_file, n_threads
         )
     )
+
+    # This should be refactored, but will work for now.
+    with open(in_file, "r") as f:
+        nwks = [line.strip() for line in f]
+
+    for i, string in enumerate(nwks):
+        if not is_newick(string):
+            print("Please fix line {}. Aborting.".format(i+1))
+            return 1
+
     print("Finding median tree. This might take a while!")
     median_nwks = median_triplet_trees(nwks, n_threads=n_threads)
-    print("Done!")
 
     with open(out_file, "w") as f:
         f.writelines([s + "\n" for s in median_nwks])
-    print("Wrote result to output file.")
+    print("* Wrote result to output file {}.".format(out_file))
+
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

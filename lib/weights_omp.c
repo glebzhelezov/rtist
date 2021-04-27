@@ -4,6 +4,8 @@
 #include <math.h>
 #include "weights_omp.h"
 #include "lookup_table.h"
+#include "progressbar.h"
+#include "statusbar.h"
 
 int main() {
     int left_sets[] = {5,2,15,4,3,1,2,4,2,7,5};
@@ -116,9 +118,16 @@ void fill_compressed_weight_representation(
         int *two2three,
         int n_threads) {
     /* Iterate over all the (sub)bi-partitions. */
+    int loop_progress = 0;
+    progressbar *progbar = progressbar_new("Progress", n_biparts);
 #pragma omp parallel num_threads(n_threads)
     {
         int *weights_private = calloc(2*ipow(3,n_species-1), sizeof(int));
+        int counter_private = 0;
+        int n_threads_assigned = omp_get_num_threads();
+        int output_step = round(n_biparts/(100*n_threads_assigned));
+        output_step = (output_step > 1) ? output_step : 1;
+        int thread_id_private = omp_get_thread_num();
 #pragma omp for schedule(dynamic)
         for (int i=0; i<n_biparts; i++) {
             /* 1<<n_species == 2^n_species; */
@@ -170,6 +179,19 @@ void fill_compressed_weight_representation(
                     }
                 }
             }
+            counter_private++;
+
+            if (counter_private % output_step == 0) {
+# pragma omp atomic update
+                loop_progress = loop_progress + counter_private;
+                counter_private = 0;
+
+                if (thread_id_private == 0) {
+                    /*printf("Loop progress: %d\n", loop_progress);*/
+                    progressbar_update(progbar, loop_progress);
+                    //fflush(stdout);
+                }
+            }
         }
 #pragma omp critical
         {
@@ -179,6 +201,8 @@ void fill_compressed_weight_representation(
         }
         free(weights_private);
     }
+    progressbar_update(progbar, n_biparts);
+    progressbar_finish(progbar);
 
 }
 

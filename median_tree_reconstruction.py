@@ -98,6 +98,7 @@ def get_weights(gts_nwks, dictionary):
 
 
 def get_stack(bipartition_weights, n_species):
+    print("* Finding maximal possible weight of each bipartition.")
     # The "stack" gives the best weight of each subset
     f = init_bipart_rep_function(n_species)
     # Score of each triple
@@ -136,6 +137,7 @@ def get_stack(bipartition_weights, n_species):
 
 def process_nwks(nwks, n_threads=1):
     """Returns weights of bipartitions, dictionary, and reverse dictionary"""
+    print("* Parsing Newick strings and recording bipartitions in GTs.")
     # Get rid of unnecessary info in Newick string
     nwks_simplified = [simplify_nwk(s) for s in nwks]
     # Map each name to an integer
@@ -152,9 +154,11 @@ def process_nwks(nwks, n_threads=1):
     # Get the number of species across all the GTs
     n_species = len(names)
     # Get the weights of all possible bipartitions
+    print("* Finding each possible bipartition's weight:")
     triplet_weights = comb2.py_compressed_weight_rep(
         weights, n_species, n_threads=n_threads
     )
+    print("Done!")
 
     return triplet_weights, dictionary, reverse_dictionary
 
@@ -207,5 +211,11 @@ def median_triplet_trees(nwks, n_threads=1):
     stack, best_biparts = get_stack(triplet_weights, len(dictionary))
     # bitset representation of all the tips
     x = 2 ** len(reverse_dictionary) - 1
-    print("Total common triplet count is {}.".format(stack[x]))
+    n = len(dictionary)
+    theoretical_bound = len(nwks) * n * (n - 1) * (n - 2) // 2
+    print(
+        "Best possible triplet count is {} (out of a maximum of {}).".format(
+            stack[x], theoretical_bound
+        )
+    )
     return get_all_trees(x, dictionary, reverse_dictionary, best_biparts)
