@@ -2,6 +2,7 @@
 import argparse
 import sys
 from os import cpu_count
+from os.path import basename
 from median_tree_reconstruction import median_triplet_trees
 
 # Trick by Steven Berthard
@@ -12,7 +13,6 @@ class FriendlyParser(argparse.ArgumentParser):
         sys.stderr.write('error: %s\n' % message)
         self.print_help()
         sys.exit(2)
-
 
 def main():
     parser = FriendlyParser(
@@ -36,7 +36,7 @@ def main():
     n_threads = result.threads
 
     if out_file is None:
-        out_file = "out_" + in_file
+        out_file = "out_" + basename(in_file)
 
     # Set default maximum number of threads.
     if n_threads == -1:

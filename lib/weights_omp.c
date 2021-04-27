@@ -116,10 +116,10 @@ void fill_compressed_weight_representation(
         int *two2three,
         int n_threads) {
     /* Iterate over all the (sub)bi-partitions. */
-#pragma omp parallel num_threads ( n_threads )
+#pragma omp parallel num_threads(n_threads)
     {
         int *weights_private = calloc(2*ipow(3,n_species-1), sizeof(int));
-#pragma omp for schedule(runtime)
+#pragma omp for schedule(dynamic)
         for (int i=0; i<n_biparts; i++) {
             /* 1<<n_species == 2^n_species; */
             int a = left_sets[i];
