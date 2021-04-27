@@ -2,6 +2,7 @@
 import argparse
 from median_tree_reconstruction import median_triplet_trees
 
+
 def main():
     parser = argparse.ArgumentParser(
         description="reads in a file of Newick strings, and outputs with all the median triplet trees."
@@ -33,6 +34,7 @@ def main():
     with open(out_file, 'w') as f:
         f.writelines([s + '\n' for s in median_nwks])
     print("Wrote result to output.")
+
 
 if __name__ == "__main__":
     main()

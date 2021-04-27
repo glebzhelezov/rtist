@@ -1,17 +1,14 @@
-import pyximport
+#pyximport.install(language_level=3)
 
-pyximport.install(language_level=3)
+#import pyximport
 import re
-from triplet import genetreegen as gtg
-from triplet import snoob
-from triplet import triplet_cy
-from triplet import base3_bipart_storage
 import comb2
 import numpy as np
-from gmpy2 import popcount
-from triplet import astral_wrapper
-from triplet import stelar_wrapper
 
+#from gmpy2 import popcount
+from bitsnbobs import popcount, get_binary_subsets, init_bipart_rep_function
+import snoob
+#from triplet import triplet_cy
 
 def simplify_nwk(s):
     """Returns Newick representation with only leaf names."""
@@ -106,7 +103,7 @@ def get_weights(gts_nwks, dictionary):
 
 def get_stack(bipartition_weights, n_species):
     # The "stack" gives the best weight of each subset
-    f = base3_bipart_storage.init_bipart_rep_function(n_species)
+    f = init_bipart_rep_function(n_species)
     # Score of each triple
     stack = np.zeros(2 ** n_species, dtype=np.intc)
     # Each subset has a list of the maximizing bipartitions
@@ -119,7 +116,7 @@ def get_stack(bipartition_weights, n_species):
         for combo in snoob.get_all_snoobs(universe, n):
             best_bipart_list = best_biparts[combo]
             max_score = -1
-            for subset in triplet_cy.get_binary_subsets(combo):
+            for subset in get_binary_subsets(combo):
                 complement = combo - subset
                 if subset < complement:
                     score = (
@@ -139,6 +136,7 @@ def get_stack(bipartition_weights, n_species):
 
     return stack, best_biparts
 
+
 def process_nwks(nwks, n_threads=1):
     """Returns weights of bipartitions, dictionary, and reverse dictionary"""
     # Get rid of unnecessary info in Newick string
@@ -150,9 +148,12 @@ def process_nwks(nwks, n_threads=1):
     # Get the number of species across all the GTs
     n_species = len(names)
     # Get the weights of all possible bipartitions
-    triplet_weights = comb2.py_compressed_weight_rep(weights, n_species, n_threads=n_threads)
+    triplet_weights = comb2.py_compressed_weight_rep(
+        weights, n_species, n_threads=n_threads
+    )
 
     return triplet_weights, dictionary, reverse_dictionary
+
 
 def get_present_species(x, reverse_dictionary):
     # Can be optimized with bitwise operations
@@ -190,7 +191,9 @@ def get_all_trees(x, dictionary, reverse_dictionary, best_biparts):
 
 
 def median_triplet_trees(nwks, n_threads=1):
-    triplet_weights, dictionary, reverse_dictionary = process_nwks(nwks, n_threads=n_threads)
+    triplet_weights, dictionary, reverse_dictionary = process_nwks(
+        nwks, n_threads=n_threads
+    )
     stack, best_biparts = get_stack(triplet_weights, len(dictionary))
     # bitset representation of all the tips
     x = 2 ** len(reverse_dictionary) - 1
