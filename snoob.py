@@ -1,5 +1,6 @@
 from bitsnbobs import popcount, pysnoob
-from scipy.special import comb
+from scipycomb import _comb_int as comb
+#from scipy.special import comb
 
 def get_first_n_combo(x, n):
     """First number with n set bits, which only has set bits where x has set bits."""
@@ -18,7 +19,7 @@ def get_all_snoobs(x, n_set_bits):
     # number of set bits in x
     n_universe_bits = popcount(x)
     # the length our output should have
-    n_combos = comb(n_universe_bits, n_set_bits, exact=True)
+    n_combos = comb(n_universe_bits, n_set_bits)
     
     combos = []
     # The first such combo.

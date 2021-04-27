@@ -3,7 +3,7 @@
 #import pyximport
 import re
 import comb2
-import numpy as np
+#import numpy as np
 
 #from gmpy2 import popcount
 from bitsnbobs import popcount, get_binary_subsets, init_bipart_rep_function
@@ -105,7 +105,8 @@ def get_stack(bipartition_weights, n_species):
     # The "stack" gives the best weight of each subset
     f = init_bipart_rep_function(n_species)
     # Score of each triple
-    stack = np.zeros(2 ** n_species, dtype=np.intc)
+    stack = comb2.zero_array(2**n_species, 'i')
+    #stack = np.zeros(2 ** n_species, dtype=np.intc)
     # Each subset has a list of the maximizing bipartitions
     best_biparts = [[] for _ in range(2 ** n_species)]
 

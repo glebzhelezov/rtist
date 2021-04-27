@@ -1,3 +1,6 @@
+from cpython cimport array
+import array
+
 cdef extern from "weights_omp.h":
     int combinations_2(int n)
 cdef extern from "weights_omp.h" nogil:
@@ -16,7 +19,14 @@ cdef extern from "weights_omp.h" nogil:
 cdef extern from "lookup_table.h":
     void fill_two2three(int *two2three, int n)
 
-import numpy as np
+def zero_array(n, type_code='i'):
+    """Creates an n-long zeroed out Python array, default type int."""
+    cdef array.array array_template = array.array(type_code, [])
+    cdef array.array newarray
+    newarray = array.clone(array_template, n, zero=True)
+
+    return newarray
+
 
 def py_combinations_2(n):
     """Return n choose 2."""
@@ -26,9 +36,7 @@ def create_two2three(n):
     """Create an array whose ith element is the number i, with 3^n instead
     of 2^n in the binary expansion of."""
 
-    ar = np.zeros(2**n, dtype=np.intc)
-    if not ar.flags['C_CONTIGUOUS']:
-        ar = np.ascontiguousarray(ar)
+    ar = zero_array(2**n, 'i')
 
     cdef int[::1] ar_memview = ar
 
@@ -39,9 +47,9 @@ def create_two2three(n):
 def py_compressed_weight_rep(bipart_weights, n_species, n_threads=8):
     """Computes the compressed representation of the bipartition weights."""
     n_biparts = len(bipart_weights)
-    ls = np.zeros(n_biparts, dtype=np.intc)
-    rs = np.zeros(n_biparts, dtype=np.intc)
-    ws = np.zeros(n_biparts, dtype=np.intc)
+    ls = zero_array(n_biparts, 'i')
+    rs = zero_array(n_biparts, 'i')
+    ws = zero_array(n_biparts, 'i')
 
     for (i, ((l,r),w)) in enumerate(bipart_weights.items()):
         ls[i]=l
@@ -50,12 +58,9 @@ def py_compressed_weight_rep(bipart_weights, n_species, n_threads=8):
 
     two2three = create_two2three(n_species)
 
-    weights = np.zeros(2*3**(n_species-1), dtype=np.intc)
+    weights = zero_array(2*3**(n_species-1), 'i')
     
     arrays_to_c = [ls, rs, ws, weights]
-    for ar in [ls, rs, ws, weights]:
-        if not ar.flags['C_CONTIGUOUS']:
-            ar = np.ascontiguousarray(ar)
 
     cdef int[::1] weights_memview = weights
     cdef int[::1] two2three_memview = two2three

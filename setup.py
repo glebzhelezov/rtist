@@ -18,4 +18,9 @@ bitsnbobs = Extension(
         sources=["bitsnbobs.pyx"],
         )
 
-setup(name="comb2", ext_modules=cythonize([comb2_extension, bitsnbobs], language_level=3))
+scipycomb = Extension(
+        name="scipycomb",
+        sources=["scipy_comb.pyx"],
+        )
+
+setup(name="comb2", ext_modules=cythonize([comb2_extension, bitsnbobs, scipycomb], language_level=3))
