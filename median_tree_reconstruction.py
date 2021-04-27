@@ -200,7 +200,7 @@ def get_all_trees(x, dictionary, reverse_dictionary, best_biparts):
     return [
         t + ";"
         for t in _get_all_trees(x, dictionary, reverse_dictionary, best_biparts)
-    ]
+
 
 
 def median_triplet_trees(nwks, n_threads=1):
@@ -212,9 +212,9 @@ def median_triplet_trees(nwks, n_threads=1):
     # bitset representation of all the tips
     x = 2 ** len(reverse_dictionary) - 1
     n = len(dictionary)
-    theoretical_bound = len(nwks) * n * (n - 1) * (n - 2) // 2
+    theoretical_bound = len(nwks) * n * (n - 1) * (n - 2) // 6
     print(
-        "Best possible triplet count is {} (out of a maximum of {}).".format(
+        "Best possible triplet count is {}, out of a maximum of {}.".format(
             stack[x], theoretical_bound
         )
     )

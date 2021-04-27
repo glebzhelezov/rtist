@@ -42,9 +42,17 @@ def main():
         help="output file (warning: any existing file will be overwritten!). Defaults to out_<input file>",
         default=None,
     )
+    parser.add_argument(
+        "-v",
+        "--version",
+        action="store_true",
+        help="print out the version of this program",
+    )
 
     result = parser.parse_args()
 
+    if result.version:
+        print("Median Triplet, version 0.01 (alpha).")
     in_file = result.i
     out_file = result.outfile
     n_threads = result.threads
@@ -58,27 +66,37 @@ def main():
     if n_threads is None:
         n_threads = 1
 
-    print(
-        "Reading Newick strings from {}.\nOutputting result to {}.\nMax number of threads set to {}.\n".format(
-            in_file, out_file, n_threads
-        )
-    )
+    print("Newick file: {}".format(in_file))
+    print("Output file: {}".format(out_file))
+    print("Max threads: {}".format(n_threads))
+    print("")
 
     # This should be refactored, but will work for now.
-    with open(in_file, "r") as f:
-        nwks = [line.strip() for line in f]
+    try:
+        with open(in_file, "r") as f:
+            nwks = [line.strip() for line in f]
+    except IOError:
+        print("Can't open input file {} for reading. Aborting.".format(in_file))
+        return 1
 
     for i, string in enumerate(nwks):
         if not is_newick(string):
-            print("Please fix line {}. Aborting.".format(i+1))
+            print("Can't parse line {}. Aborting.".format(i+1))
             return 1
 
     print("Finding median tree. This might take a while!")
     median_nwks = median_triplet_trees(nwks, n_threads=n_threads)
 
-    with open(out_file, "w") as f:
-        f.writelines([s + "\n" for s in median_nwks])
-    print("* Wrote result to output file {}.".format(out_file))
+    try:
+        with open(out_file, "w") as f:
+            f.writelines([s + "\n" for s in median_nwks])
+        print("* Wrote all median triplet trees to {}.".format(out_file))
+    except IOError:
+        print("Can't open output file {} for writing. Outputting to stdout instead.".format(outfile))
+        print("")
+        for s in median_nwks:
+            print(s)
+        print("")
 
     return 0
 
