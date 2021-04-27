@@ -74,9 +74,12 @@ def main():
         return 1
 
     for i, string in enumerate(nwks):
-        if not is_newick(string):
-            print("Can't parse line {}. Aborting.".format(i+1))
+        # Need to put in a strictor validator here
+        if string[-1] != ';':
+            print("Line {} doesn't end of a semicolon! Aborting!".format(i+1))
             return 1
+        if string.count("(") != string.count(")"):
+            print("Line {} doesn't have an equal number of left and right brackets! Aborting!".format(i+1))
 
     print("Finding median tree. This might take a while!")
     median_nwks = median_triplet_trees(nwks, n_threads=n_threads)
