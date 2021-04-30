@@ -5,7 +5,6 @@ import median_triplet_version
 from os import cpu_count
 from os.path import basename
 from median_tree_reconstruction import median_triplet_trees
-from Newick_Validator import is_newick
 
 # Trick by Steven Berthard
 # https://groups.google.com/g/argparse-users/c/LazV_tEQvQw
