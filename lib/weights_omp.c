@@ -42,12 +42,8 @@ int main() {
 
 
 /* Calculate n choose 2. */
-int combinations_2(int n) {
-    if (n >= 2) {
-        return (n*(n-1))/2;
-    } else {
-        return 0;
-    }
+inline int combinations_2(int n) {
+    return (n*(n-1))/2;
 }
 
 
@@ -55,13 +51,13 @@ int combinations_2(int n) {
  * bits only where universe has bits. Algorithm by Bill Gosper. */
 int snoob(int sub, int universe) {
     int tmp = sub - 1;
-    int rip = universe&(tmp + (sub&(0 - sub)) - universe);
+    int rip = universe&(tmp + (sub&(- sub)) - universe);
 
     sub = (tmp&sub)^rip;
     sub &= sub-1;
 
     while (sub>0) {
-        tmp = universe&(0 - universe);
+        tmp = universe&(-universe);
         rip ^= tmp;
         universe ^= tmp;
         sub &= sub - 1;
@@ -92,6 +88,22 @@ int first_n_combo(int universe, int n) {
 
 /* The number of common triplets to the sub-bipartitions (a,b) and (c,d). */
 int n_common_triplets(int a, int b, int c, int d) {
+    int total = 0;
+
+    int n_ac = __builtin_popcount(a&c);
+    int n_ad = __builtin_popcount(a&d);
+    int n_bc = __builtin_popcount(b&c);
+    int n_bd = __builtin_popcount(b&d);
+
+    total = combinations_2(n_ac)*n_bd
+                + combinations_2(n_ad)*n_bc
+                + combinations_2(n_bc)*n_ad
+                + combinations_2(n_bd)*n_ac;
+
+    return total;
+}
+
+int n_common_triplets_avx(int a, int b, int c, int d) {
     int total = 0;
 
     int n_ac = __builtin_popcount(a&c);
@@ -140,6 +152,8 @@ void fill_compressed_weight_representation(
             /* This iterates over all numbers with bits set only where
              * bitmask has set bits, excluding bitmask. */
             int a_prime = bitmask & (bitmask - 1);
+            int bipart_weight = bipart_weights[i];
+
             for (int a_prime=bitmask&(bitmask-1); a_prime>0;
                     a_prime=bitmask&(a_prime-1)) {
                 int bitmask_inner = bitmask - a_prime;
@@ -151,6 +165,8 @@ void fill_compressed_weight_representation(
                 for (int b_prime=bitmask_inner; b_prime>0; 
                         b_prime=bitmask_inner&(b_prime-1)) {
                     if (b_prime < a_prime) {
+                        /*int n_triplets = n_common_triplets(
+                                a_prime, b_prime, a, b);*/
                         for (int k1=kernel; k1>=0; k1=kernel&(k1-1)) {
                             for (int k2=kernel-k1; k2>=0; 
                                     k2=(kernel-k1)&(k2-1)) {
@@ -158,11 +174,16 @@ void fill_compressed_weight_representation(
                                 int y = b_prime + k2;
 
                                 /* Put in code to calculate common # triplets. */
+                                /*int n_triplets = n_common_triplets(
+                                        x, y, a, b);*/
+                                /* For whatever reason the code is faster when
+                                 * this is called inside the inner loop and
+                                 * not the outer loop... */
                                 int n_triplets = n_common_triplets(
-                                        x, y, a, b);
+                                        a_prime, b_prime, a, b);
                                 /* Update precomputed weights. */
                                 int rep = compressed_rep(x, y, two2three);
-                                weights_private[rep] += n_triplets * bipart_weights[i];
+                                weights_private[rep] += n_triplets * bipart_weight;
 
                                 /* This is necessary to break out of an endless
                                  * loop! */
