@@ -7,6 +7,7 @@
 #include "progressbar.h"
 #include "statusbar.h"
 
+/*
 int main() {
     int left_sets[] = {5,2,15,4,3,1,2,4,2,7,5};
     int right_sets[] = {8,13,16,9,12,12,9,11,5,8,10};
@@ -15,7 +16,7 @@ int main() {
     int n_species = 16;
 
     int *weights;
-    /* Do the calculations B-) */
+    // Do the calculations B-)
     int n_threads = 1;
     get_compressed_weight_representation(left_sets, right_sets, bipart_weights,
             n_biparts, n_species, &weights, n_threads);
@@ -23,11 +24,11 @@ int main() {
     int left, right;
     int *two2three;
     calculate_two2three(&two2three, n_species);
-    /*get_optimal_bipart(ipow(2,n_species)-1, &left, &right, weights, two2three);*/
+    //get_optimal_bipart(ipow(2,n_species)-1, &left, &right, weights, two2three);
 
-    /* Should probably create a separate function like,
-     * fill_compressed_rep_matrix( .... ) so it can be called directly
-     * from Python with NumPy arrays. */
+    // Should probably create a separate function like,
+    // fill_compressed_rep_matrix( .... ) so it can be called directly
+    // from Python with NumPy arrays. 
 
     printf("[");
     for (int i=0; i<2*3*3*3*3; i++) {
@@ -39,7 +40,7 @@ int main() {
 
     return 0;
 }
-
+*/
 
 /* Calculate n choose 2. */
 inline int combinations_2(int n) {
@@ -129,6 +130,7 @@ void fill_compressed_weight_representation(
         int *weights, /* Must be allocated with 0 in each entry. */
         int *two2three,
         int n_threads) {
+                                //printf("meow\n");
     /* Iterate over all the (sub)bi-partitions. */
     int loop_progress = 0;
     progressbar *progbar = progressbar_new("Progress", n_biparts);
@@ -165,11 +167,14 @@ void fill_compressed_weight_representation(
                 for (int b_prime=bitmask_inner; b_prime>0; 
                         b_prime=bitmask_inner&(b_prime-1)) {
                     if (b_prime < a_prime) {
+                        int weight_increment = bipart_weight*n_common_triplets(
+                                a_prime, b_prime, a, b);
                         /*int n_triplets = n_common_triplets(
                                 a_prime, b_prime, a, b);*/
                         for (int k1=kernel; k1>=0; k1=kernel&(k1-1)) {
                             for (int k2=kernel-k1; k2>=0; 
                                     k2=(kernel-k1)&(k2-1)) {
+                                //__builtin_prefetch(&n_triplets);
                                 int x = a_prime + k1;
                                 int y = b_prime + k2;
 
@@ -179,11 +184,12 @@ void fill_compressed_weight_representation(
                                 /* For whatever reason the code is faster when
                                  * this is called inside the inner loop and
                                  * not the outer loop... */
-                                int n_triplets = n_common_triplets(
-                                        a_prime, b_prime, a, b);
+                                /*int n_triplets = n_common_triplets(
+                                        a_prime, b_prime, a, b);*/
                                 /* Update precomputed weights. */
                                 int rep = compressed_rep(x, y, two2three);
-                                weights_private[rep] += n_triplets * bipart_weight;
+                                //weights_private[rep] += n_triplets * bipart_weight;
+                                weights_private[rep] += weight_increment;
 
                                 /* This is necessary to break out of an endless
                                  * loop! */
