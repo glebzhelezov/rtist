@@ -42,6 +42,8 @@ def get_names(gts_nwks):
 
 
 def splitter(nwk):
+    """Returns the two inner Newick subtrees; assumes Newick string does not
+    end with a semicolon."""
     s = nwk
     bracket_count = 0
     start_position = 0
@@ -63,6 +65,9 @@ def splitter(nwk):
 
 
 def get_biparts(nwk, dictionary):
+    """Get all the bipartitions in the Newick tree. Each partition is
+    represented by pairs of binary numbers. The smaller binary number is the
+    first coordinate."""
     biparts = []
 
     def recurse(s):
@@ -82,6 +87,39 @@ def get_biparts(nwk, dictionary):
 
     return biparts
 
+def get_subset_biparts(nwks, dictionary):
+    biparts = []
+    biparts_per_subset = dict([])
+
+    def recurse(s):
+        split = splitter(s)
+
+        if len(split) == 1:
+            return 2 ** dictionary[split[0]]
+        if len(split) == 2:
+            a = recurse(split[0])
+            b = recurse(split[1])
+
+            subset = a+b
+            bipart = (min(a,b), max(a,b))
+            #biparts.append(bipart)
+
+            # List this bipart as belonging to the partition
+            if subset in biparts_per_subset:
+                #print(subset)
+                if bipart not in biparts_per_subset[subset]:
+                    biparts_per_subset[subset].append(bipart)
+            else:
+                #print(subset)
+                biparts_per_subset[subset] = [bipart]
+            
+            return subset
+
+    # fill up the biparts list
+    for nwk in nwks:
+        recurse(nwk)
+
+    return biparts_per_subset
 
 def get_weights(gts_nwks, dictionary):
     weights = {}

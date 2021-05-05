@@ -189,15 +189,15 @@ void fill_compressed_weight_representation(
 
                                 /* This is necessary to break out of an endless
                                  * loop! */
-                                /*if (k2 == 0) {
+                                if (k2 == 0) {
                                     break;
-                                }*/
+                                }
                             }
                             /* This is necessary to break out of an endless
                              * loop! */
-                            /*if (k1 == 0) {
+                            if (k1 == 0) {
                                 break;
-                            }*/
+                            }
                         }
                     }
                 }
@@ -216,7 +216,7 @@ void fill_compressed_weight_representation(
                 }
             }
         }
-#pragma omp critical
+# pragma omp critical
         {
             for (int i=0; i<2*ipow(3,n_species-1); i++) {
                 weights[i] += weights_private[i];
