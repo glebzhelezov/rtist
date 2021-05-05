@@ -169,23 +169,19 @@ void fill_compressed_weight_representation(
                     if (b_prime < a_prime) {
                         int weight_increment = bipart_weight*n_common_triplets(
                                 a_prime, b_prime, a, b);
+                        /* Don't continue if there's nothing to increment. */
+                        /*if (weight_increment == 0) {
+                            continue;
+                        }*/
                         /*int n_triplets = n_common_triplets(
                                 a_prime, b_prime, a, b);*/
                         for (int k1=kernel; k1>=0; k1=kernel&(k1-1)) {
                             for (int k2=kernel-k1; k2>=0; 
                                     k2=(kernel-k1)&(k2-1)) {
-                                //__builtin_prefetch(&n_triplets);
                                 int x = a_prime + k1;
                                 int y = b_prime + k2;
 
                                 /* Put in code to calculate common # triplets. */
-                                /*int n_triplets = n_common_triplets(
-                                        x, y, a, b);*/
-                                /* For whatever reason the code is faster when
-                                 * this is called inside the inner loop and
-                                 * not the outer loop... */
-                                /*int n_triplets = n_common_triplets(
-                                        a_prime, b_prime, a, b);*/
                                 /* Update precomputed weights. */
                                 int rep = compressed_rep(x, y, two2three);
                                 //weights_private[rep] += n_triplets * bipart_weight;
@@ -193,15 +189,15 @@ void fill_compressed_weight_representation(
 
                                 /* This is necessary to break out of an endless
                                  * loop! */
-                                if (k2 == 0) {
+                                /*if (k2 == 0) {
                                     break;
-                                }
+                                }*/
                             }
                             /* This is necessary to break out of an endless
                              * loop! */
-                            if (k1 == 0) {
+                            /*if (k1 == 0) {
                                 break;
-                            }
+                            }*/
                         }
                     }
                 }
