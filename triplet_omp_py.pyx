@@ -11,6 +11,7 @@ ELSE:
 
 cdef extern from "weights_omp.h":
     int combinations_2(int n)
+    int n_common_triplets(int a, int b, int c, int d)
 cdef extern from "weights_omp.h" nogil:
     void fill_compressed_weight_representation(
             int *left_sets,
@@ -90,3 +91,6 @@ def py_compressed_weight_rep(bipart_weights, n_species, n_threads=8):
     sig_off()
 
     return weights
+
+def py_n_common_triplets(int a, int b, int c, int d):
+    return n_common_triplets(a, b, c, d)
