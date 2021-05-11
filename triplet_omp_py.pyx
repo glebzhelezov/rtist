@@ -14,15 +14,18 @@ cdef extern from "weights_omp.h":
     int n_common_triplets(int a, int b, int c, int d)
 cdef extern from "weights_omp.h" nogil:
     void fill_compressed_weight_representation(
-            int *left_sets,
-            int *right_sets,
-            int *bipart_weights,
-            int n_biparts,
-            int n_species,
-            int *weights,
-            int *two2three,
-            int n_threads,
-            )
+        int *subsets,
+        int *start_i,
+        int *end_i,
+        int *left_sets,
+        int *right_sets,
+        int *bipart_weights,
+        int n_subsets,
+        int n_species,
+        int *weights,
+        int *two2three,
+        int n_threads,
+        )
 #    void get_optimal_bipart(int full_set, int *left, int *right, int *weights, 
 #            int *two2three)
 cdef extern from "lookup_table.h":
@@ -53,36 +56,42 @@ def create_two2three(n):
 
     return ar
 
-def py_compressed_weight_rep(bipart_weights, n_species, n_threads=8):
+def py_compressed_weight_rep(
+        subsets, start_i, end_i, biparts_a, biparts_b, bipart_weights,
+        n_species, n_threads=8
+        ):
     """Computes the compressed representation of the bipartition weights."""
-    n_biparts = len(bipart_weights)
-    ls = zero_array(n_biparts, 'i')
-    rs = zero_array(n_biparts, 'i')
-    ws = zero_array(n_biparts, 'i')
-
-    for (i, ((l,r),w)) in enumerate(bipart_weights.items()):
-        ls[i]=l
-        rs[i]=r
-        ws[i]=w
+    # Copy the lists to arrays, to make them usable in C code
+    ar_subsets = array.array('i', subsets)
+    ar_start_i = array.array('i', start_i)
+    ar_end_i = array.array('i', end_i)
+    ar_biparts_a = array.array('i', biparts_a)
+    ar_biparts_b = array.array('i', biparts_b)
+    ar_bipart_weights = array.array('i', bipart_weights)
+    n_subsets = len(subsets)
 
     two2three = create_two2three(n_species)
+    cdef int[::1] two2three_memview = two2three
 
     weights = zero_array(2*3**(n_species-1), 'i')
-    
-    arrays_to_c = [ls, rs, ws, weights]
-
     cdef int[::1] weights_memview = weights
-    cdef int[::1] two2three_memview = two2three
-    cdef int[::1] ls_memview = ls
-    cdef int[::1] rs_memview = rs
-    cdef int[::1] ws_memview = ws
+
+    cdef int[::1] subsets_memview = ar_subsets
+    cdef int[::1] start_memview = ar_start_i
+    cdef int[::1] end_memview = ar_end_i
+    cdef int[::1] biparts_a_memview = ar_biparts_a
+    cdef int[::1] biparts_b_memview = ar_biparts_b
+    cdef int[::1] bipart_weights_memview = ar_bipart_weights
 
     sig_on()
     fill_compressed_weight_representation(
-            &ls_memview[0],
-            &rs_memview[0],
-            &ws_memview[0], 
-            n_biparts,
+            &subsets_memview[0],
+            &start_memview[0],
+            &end_memview[0],
+            &biparts_a_memview[0],
+            &biparts_b_memview[0],
+            &bipart_weights_memview[0],
+            n_subsets,
             n_species,
             &weights_memview[0],
             &two2three_memview[0],

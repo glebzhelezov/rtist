@@ -184,22 +184,45 @@ def process_nwks(nwks, n_threads=1):
     nwks_simplified = [simplify_nwk(s) for s in nwks]
     # Map each name to an integer
     names, dictionary, reverse_dictionary = get_names(nwks_simplified)
-    # Warn user of impeding doom
-    if len(dictionary) > 15:
-        print(
-            "Warning: attempting to find exact tree with {} tips. The computation might run out of memory, or take an unreasonable amount of time.".format(
-                len(dictionary)
-            )
-        )
-    # Get the weights of the bipartitions in the GTs
-    weights = get_weights(nwks_simplified, dictionary)
     # Get the number of species across all the GTs
     n_species = len(names)
+    # Warn user of impeding doom; this is a pretty low bar though, 20 is more
+    # reasonable on modern hardware.
+    if n_species > 15:
+        print(
+            "Warning: attempting to find exact tree with {} tips. The computation might run out of memory, or take an unreasonable amount of time.".format(
+                n_species
+            )
+        )
+    
+    # Get the weights of the bipartitions in the GTs
+    weights = get_weights(nwks_simplified, dictionary)
+    # Get the biparts by the subset (i.e. (a+b)->[(a,b),...]
+    biparts_by_subset = get_subset_biparts(nwks_simplified, dictionary)
+    # Arrange data to be easily accessible by C code
+    subsets = []
+    start_i = []
+    end_i = []
+    biparts_a = []
+    biparts_b = []
+    bipart_weights = []
+
+    position = 0
+    for subset in biparts_by_subset.keys():
+        subsets.append(subset)
+        start_i.append(position)
+        biparts = biparts_by_subset[subset]
+        for (a,b) in biparts:
+            biparts_a.append(a)
+            biparts_b.append(b)
+            bipart_weights.append(weights[(a,b)])
+            position += 1
+        end_i.append(position)
     # Get the weights of all possible bipartitions
     print("* Finding each possible bipartition's weight:")
     triplet_weights = triplet_omp.py_compressed_weight_rep(
-        weights, n_species, n_threads=n_threads
-    )
+            subsets, start_i, end_i, biparts_a, biparts_b, bipart_weights,
+            n_species, n_threads=n_threads)
     print("Done!")
 
     return triplet_weights, dictionary, reverse_dictionary
