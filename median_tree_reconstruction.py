@@ -1,6 +1,7 @@
 import re
 import triplet_omp
 import snoob
+from multiprocessing import Pool
 from bitsnbobs import popcount, get_binary_subsets, init_bipart_rep_function
 
 
@@ -17,22 +18,30 @@ def simplify_nwk(s):
 
     return s
 
+def get_line_names(i, nwk):
+    tokens = re.findall(r"([(,])([a-zA-Z0-9]*)(?::\d*(\.\d*)?)?(?=[,)])", nwk)
+    cur_names = [t[1] for t in tokens]
+    if "" in cur_names:
+        raise SyntaxError(
+            "Unlabeled tip in Newick string on line {}!".format(i + 1)
+        )
+    return cur_names
 
-def get_names(gts_nwks):
+def get_names(gts_nwks, n_threads=1):
     """Gets the unique names in a list of Newick strings."""
     names = set([])
-    for i, gt_nwk in enumerate(gts_nwks):
-        tokens = re.findall(
-            r"([(,])([a-zA-Z0-9]*)(?::\d*(\.\d*)?)?(?=[,)])", gt_nwk
-        )
-        cur_names = [t[1] for t in tokens]
-        if "" in cur_names:
-            raise SyntaxError(
-                "Unlabeled tip in Newick string on line {}!".format(i + 1)
-            )
-        names.update(cur_names)
-        # parse(gt_nwk)
-        # get_names(gts_nwk)
+    
+
+    if len(gts_nwks) > 50000:
+        print("Many Newick strings, so doing this in parallel.")
+        
+        with Pool(n_threads) as p:
+            for res in p.starmap(get_line_names, enumerate(gts_nwks)):
+                names.update(res)
+    else:
+        for i, gt_nwk in enumerate(gts_nwks):
+            cur_names = get_line_names(i, gt_nwk)
+            names.update(cur_names)
 
     names_list = list(names)
     # names_list.sort()
@@ -135,7 +144,6 @@ def get_weights(gts_nwks, dictionary):
 
     return weights
 
-
 def get_stack(bipartition_weights, n_species):
     print("* Finding maximal possible weight of each bipartition.")
     # The "stack" gives the best weight of each subset
@@ -182,10 +190,17 @@ def process_nwks(nwks, n_threads=1):
     n_threads - n threads to use (default=1)"""
     print("* Parsing Newick strings and recording bipartitions in GTs.")
     # Get rid of unnecessary info in Newick string
-    nwks_simplified = [simplify_nwk(s) for s in nwks]
+    nwks_simplified = []
+    if len(nwks) > 50000:
+        print("Many Newick strings, so doing this in parallel.")
+        with Pool(n_threads) as p:
+            nwks_simplified.extend(p.map(simplify_nwk, nwks))
+    else:
+        nwks_simplified = [simplify_nwk(s) for s in nwks]
     # Map each name to an integer
     print("* Finding all unique names.")
-    names, dictionary, reverse_dictionary = get_names(nwks_simplified)
+    names, dictionary, reverse_dictionary = get_names(nwks_simplified,
+            n_threads=n_threads)
     # Get the number of species across all the GTs
     n_species = len(names)
     # Warn user of impeding doom; this is a pretty low bar though, 20 is more
