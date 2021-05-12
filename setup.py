@@ -10,7 +10,7 @@ if cysignals is not None:
     compile_time_env["HAVE_CYSIGNALS"] = True
 
 comb2_extension = Extension(
-    #name="comb2",
+    # name="comb2",
     name="triplet_omp",
     sources=["triplet_omp_py.pyx"],
     libraries=["ctriplet", "ncurses"],

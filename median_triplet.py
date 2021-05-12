@@ -34,7 +34,12 @@ def main():
         help="output file (warning: any existing file will be overwritten!). Defaults to out_<input file>",
         default=None,
     )
-    parser.add_argument('-v', '--version', action='version', version=median_triplet_version.__version__)
+    parser.add_argument(
+        "-v",
+        "--version",
+        action="version",
+        version=median_triplet_version.__version__,
+    )
     parser.add_argument(
         "-t",
         "--threads",
@@ -48,7 +53,7 @@ def main():
         "--novalidate",
         action="store_true",
         help="don't perform line-by-line sanity check for each input Newick string (for a small speedup)",
-        default=False
+        default=False,
     )
 
     result = parser.parse_args()
@@ -87,11 +92,19 @@ def main():
         print("* Checking for matching parentheses and semicolon in each GT.")
         for i, string in enumerate(nwks):
             # Need to put in a strictor validator here
-            if string[-1] != ';':
-                print("Line {} doesn't end of a semicolon! Aborting!".format(i+1))
+            if string[-1] != ";":
+                print(
+                    "Line {} doesn't end of a semicolon! Aborting!".format(
+                        i + 1
+                    )
+                )
                 return 1
             if string.count("(") != string.count(")"):
-                print("Line {} doesn't have an equal number of left and right brackets! Aborting!".format(i+1))
+                print(
+                    "Line {} doesn't have an equal number of left and right brackets! Aborting!".format(
+                        i + 1
+                    )
+                )
                 return 1
 
     print("Finding median tree. This might take a while!")
@@ -102,7 +115,11 @@ def main():
             f.writelines([s + "\n" for s in median_nwks])
         print("* Wrote all median triplet trees to {}.".format(out_file))
     except IOError:
-        print("Can't open output file {} for writing. Outputting to stdout instead.".format(outfile))
+        print(
+            "Can't open output file {} for writing. Outputting to stdout instead.".format(
+                outfile
+            )
+        )
         print("")
         for s in median_nwks:
             print(s)

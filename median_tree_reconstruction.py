@@ -1,14 +1,21 @@
 import re
 import triplet_omp
 import snoob
+from multiprocessing import Pool
 from bitsnbobs import popcount, get_binary_subsets, init_bipart_rep_function
+from collections import deque, Counter
+from itertools import product
+from time import perf_counter
 
+# I know I shouldn't do this :(
+# Only use multiprocessing for basic parsing if the list of nwks is quite long
+__long_nwk_list__ = 100000
 
 def simplify_nwk(s):
     """Returns Newick representation with only leaf names."""
     # Get rid of spaces at the start and end
     # This already takes place in median_triplet.py
-    #s = s.strip()
+    # s = s.strip()
     s = s.replace(" ", "")
     # Get rid of non-leaf names
     s = re.sub(r"\)[^,)]+", ")", s)
@@ -18,21 +25,30 @@ def simplify_nwk(s):
     return s
 
 
-def get_names(gts_nwks):
+def get_line_names(i, nwk):
+    tokens = re.findall(r"([(,])([a-zA-Z0-9]*)(?::\d*(\.\d*)?)?(?=[,)])", nwk)
+    cur_names = [t[1] for t in tokens]
+    if "" in cur_names:
+        raise SyntaxError(
+            "Unlabeled tip in Newick string on line {}!".format(i + 1)
+        )
+    return cur_names
+
+
+def get_names(gts_nwks, n_threads=1):
     """Gets the unique names in a list of Newick strings."""
     names = set([])
-    for i, gt_nwk in enumerate(gts_nwks):
-        tokens = re.findall(
-            r"([(,])([a-zA-Z0-9]*)(?::\d*(\.\d*)?)?(?=[,)])", gt_nwk
-        )
-        cur_names = [t[1] for t in tokens]
-        if "" in cur_names:
-            raise SyntaxError(
-                "Unlabeled tip in Newick string on line {}!".format(i + 1)
-            )
-        names.update(cur_names)
-        # parse(gt_nwk)
-        # get_names(gts_nwk)
+
+    if len(gts_nwks) > __long_nwk_list__:
+        print("Many Newick strings, so doing this in parallel.")
+
+        with Pool(n_threads) as p:
+            for res in p.starmap(get_line_names, enumerate(gts_nwks)):
+                names.update(res)
+    else:
+        for i, gt_nwk in enumerate(gts_nwks):
+            cur_names = get_line_names(i, gt_nwk)
+            names.update(cur_names)
 
     names_list = list(names)
     # names_list.sort()
@@ -88,6 +104,7 @@ def get_biparts(nwk, dictionary):
 
     return biparts
 
+
 def get_subset_biparts(nwks, dictionary):
     biparts = []
     biparts_per_subset = dict([])
@@ -101,19 +118,19 @@ def get_subset_biparts(nwks, dictionary):
             a = recurse(split[0])
             b = recurse(split[1])
 
-            subset = a+b
-            bipart = (min(a,b), max(a,b))
-            #biparts.append(bipart)
+            subset = a + b
+            bipart = (min(a, b), max(a, b))
+            # biparts.append(bipart)
 
             # List this bipart as belonging to the partition
             if subset in biparts_per_subset:
-                #print(subset)
+                # print(subset)
                 if bipart not in biparts_per_subset[subset]:
                     biparts_per_subset[subset].append(bipart)
             else:
-                #print(subset)
+                # print(subset)
                 biparts_per_subset[subset] = [bipart]
-            
+
             return subset
 
     # fill up the biparts list
@@ -121,6 +138,28 @@ def get_subset_biparts(nwks, dictionary):
         recurse(nwk)
 
     return biparts_per_subset
+
+def get_subset_biparts_parallel(nwks, dictionary, n_threads=1):
+    if len(nwks) < 5*n_threads:
+        # Don't bother if there's not many Newick strings
+        return get_subset_biparts(nwks, dictionary)
+    else:
+        n_nwks = len(nwks)
+        sublist_size = n_nwks//n_threads
+        remainder = n_nwks % n_threads
+        sublists = [nwks[i*sublist_size:(i+1)*sublist_size] for i in range(0, n_threads)]
+        sublists[-1].extend(nwks[-remainder:])
+
+        biparts_per_subset = dict([])
+        with Pool(n_threads) as p:
+            for bps in p.starmap(get_subset_biparts, product(sublists, [dictionary])):
+                    for key in bps.keys():
+                        if key in biparts_per_subset:
+                            biparts_per_subset[key].update(bps[key])
+                        else:
+                            biparts_per_subset[key] = set(bps[key])
+
+        return biparts_per_subset
 
 def get_weights(gts_nwks, dictionary):
     weights = {}
@@ -134,6 +173,24 @@ def get_weights(gts_nwks, dictionary):
                 weights[bipart] = 1
 
     return weights
+
+
+def get_weights_parallel(gts_nwks, dictionary, n_threads=1):
+    """Find the weights of the data biparts."""
+
+    if len(gts_nwks) < 30*n_threads:
+        return get_weights(gts_nwks, dictionary)
+
+    all_biparts = deque()
+    chunk = len(gts_nwks) // (n_threads * 10)
+
+    with Pool(n_threads) as p:
+        for res in p.starmap(
+            get_biparts, product(gts_nwks, [dictionary]), chunksize=chunk,
+        ):
+            all_biparts.extend(res)
+
+    return Counter(all_biparts)
 
 
 def get_stack(bipartition_weights, n_species):
@@ -182,10 +239,18 @@ def process_nwks(nwks, n_threads=1):
     n_threads - n threads to use (default=1)"""
     print("* Parsing Newick strings and recording bipartitions in GTs.")
     # Get rid of unnecessary info in Newick string
-    nwks_simplified = [simplify_nwk(s) for s in nwks]
+    nwks_simplified = []
+    if len(nwks) > __long_nwk_list__:
+        print("Many Newick strings, so doing this in parallel.")
+        with Pool(n_threads) as p:
+            nwks_simplified.extend(p.map(simplify_nwk, nwks))
+    else:
+        nwks_simplified = [simplify_nwk(s) for s in nwks]
     # Map each name to an integer
     print("* Finding all unique names.")
-    names, dictionary, reverse_dictionary = get_names(nwks_simplified)
+    names, dictionary, reverse_dictionary = get_names(
+        nwks_simplified, n_threads=n_threads
+    )
     # Get the number of species across all the GTs
     n_species = len(names)
     # Warn user of impeding doom; this is a pretty low bar though, 20 is more
@@ -196,13 +261,16 @@ def process_nwks(nwks, n_threads=1):
                 n_species
             )
         )
-    
+
     # Get the weights of the bipartitions in the GTs
     print("* Calculating each GT bipartition's weight.")
-    weights = get_weights(nwks_simplified, dictionary)
+    #weights = get_weights(nwks_simplified, dictionary)
+    weights = get_weights_parallel(
+        nwks_simplified, dictionary, n_threads=n_threads
+    )
     # Get the biparts by the subset (i.e. (a+b)->[(a,b),...]
     print("* Matching bipartitions to subsets.")
-    biparts_by_subset = get_subset_biparts(nwks_simplified, dictionary)
+    biparts_by_subset = get_subset_biparts_parallel(nwks_simplified, dictionary, n_threads=n_threads)
     # Arrange data to be easily accessible by C code
     print("* Forming arrays for computations.")
     subsets = []
@@ -217,17 +285,24 @@ def process_nwks(nwks, n_threads=1):
         subsets.append(subset)
         start_i.append(position)
         biparts = biparts_by_subset[subset]
-        for (a,b) in biparts:
+        for (a, b) in biparts:
             biparts_a.append(a)
             biparts_b.append(b)
-            bipart_weights.append(weights[(a,b)])
+            bipart_weights.append(weights[(a, b)])
             position += 1
         end_i.append(position)
     # Get the weights of all possible bipartitions
     print("* Finding each possible bipartition's weight:")
     triplet_weights = triplet_omp.py_compressed_weight_rep(
-            subsets, start_i, end_i, biparts_a, biparts_b, bipart_weights,
-            n_species, n_threads=n_threads)
+        subsets,
+        start_i,
+        end_i,
+        biparts_a,
+        biparts_b,
+        bipart_weights,
+        n_species,
+        n_threads=n_threads,
+    )
     print("Done!")
 
     return triplet_weights, dictionary, reverse_dictionary
@@ -270,7 +345,8 @@ def get_all_trees(x, dictionary, reverse_dictionary, best_biparts):
     return [
         t + ";"
         for t in _get_all_trees(x, dictionary, reverse_dictionary, best_biparts)
-        ]
+    ]
+
 
 def median_triplet_trees(nwks, n_threads=1):
     triplet_weights, dictionary, reverse_dictionary = process_nwks(
