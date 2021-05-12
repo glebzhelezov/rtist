@@ -150,12 +150,22 @@ def get_subset_biparts_parallel(nwks, dictionary, n_threads=1):
 
         biparts_per_subset = dict([])
         with Pool(n_threads) as p:
-            for bps in p.starmap(get_subset_biparts, product(sublists, [dictionary])):
-                    for key in bps.keys():
-                        if key in biparts_per_subset:
-                            biparts_per_subset[key].update(bps[key])
-                        else:
-                            biparts_per_subset[key] = set(bps[key])
+            # Get the biparts per set in each subchunk of the data
+            bpses = p.starmap(get_subset_biparts, product(sublists, [dictionary]))
+            # Get the keys
+            keys = {k for bps in bpses for k in bps.keys()}
+            bpses = [[bps[k] for bps in bpses if k in bps.keys()] for k in keys]
+
+            full_bpses = p.starmap(set.union, bpses)
+
+            biparts_per_subset = {k:v for (k,v) in zip(keys, full_bpses)}
+
+            # for bps in p.starmap(get_subset_biparts, product(sublists, [dictionary])):
+            #         for key in bps.keys():
+            #             if key in biparts_per_subset:
+            #                 biparts_per_subset[key].update(bps[key])
+            #             else:
+            #                 biparts_per_subset[key] = set(bps[key])
 
         return biparts_per_subset
 
