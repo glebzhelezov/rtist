@@ -144,7 +144,7 @@ def get_subset_biparts_parallel(nwks, dictionary, n_threads=1):
     else:
         n_nwks = len(nwks)
         sublist_size = n_nwks//n_threads
-        remainder = n_nwks//n_threads
+        remainder = n_nwks % n_threads
         sublists = [nwks[i*sublist_size:(i+1)*sublist_size] for i in range(0, n_threads)]
         sublists[-1].extend(nwks[-remainder:])
 
@@ -153,9 +153,9 @@ def get_subset_biparts_parallel(nwks, dictionary, n_threads=1):
             for bps in p.starmap(get_subset_biparts, product(sublists, [dictionary])):
                     for key in bps.keys():
                         if key in biparts_per_subset:
-                            biparts_per_subset[key].extend(bps[key])
+                            biparts_per_subset[key].update(bps[key])
                         else:
-                            biparts_per_subset[key] = bps[key]
+                            biparts_per_subset[key] = set(bps[key])
 
         return biparts_per_subset
 
