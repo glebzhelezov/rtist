@@ -7,7 +7,8 @@ from bitsnbobs import popcount, get_binary_subsets, init_bipart_rep_function
 def simplify_nwk(s):
     """Returns Newick representation with only leaf names."""
     # Get rid of spaces at the start and end
-    s = s.strip()
+    # This already takes place in median_triplet.py
+    #s = s.strip()
     s = s.replace(" ", "")
     # Get rid of non-leaf names
     s = re.sub(r"\)[^,)]+", ")", s)
@@ -188,7 +189,7 @@ def process_nwks(nwks, n_threads=1):
     n_species = len(names)
     # Warn user of impeding doom; this is a pretty low bar though, 20 is more
     # reasonable on modern hardware.
-    if n_species > 15:
+    if n_species > 18:
         print(
             "Warning: attempting to find exact tree with {} tips. The computation might run out of memory, or take an unreasonable amount of time.".format(
                 n_species

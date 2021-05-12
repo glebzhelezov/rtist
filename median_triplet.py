@@ -43,12 +43,20 @@ def main():
         help="output file (warning: any existing file will be overwritten!). Defaults to out_<input file>",
         default=None,
     )
+    parser.add_argument(
+        "-n",
+        "--novalidate",
+        action="store_true",
+        help="don't perform line-by-line sanity check for each input Newick string (for a small speedup)",
+        default=False
+    )
 
     result = parser.parse_args()
 
     in_file = result.i
     out_file = result.outfile
     n_threads = result.threads
+    novalidate = result.novalidate
 
     if out_file is None:
         out_file = "out_" + basename(in_file)
@@ -62,6 +70,8 @@ def main():
     print("Newick file: {}".format(in_file))
     print("Output file: {}".format(out_file))
     print("Max threads: {}".format(n_threads))
+    if novalidate:
+        print("Not validating Newick strings!")
     print("")
 
     # This should be refactored, but will work for now.
@@ -72,14 +82,15 @@ def main():
         print("Can't open input file {} for reading. Aborting.".format(in_file))
         return 1
 
-    for i, string in enumerate(nwks):
-        # Need to put in a strictor validator here
-        if string[-1] != ';':
-            print("Line {} doesn't end of a semicolon! Aborting!".format(i+1))
-            return 1
-        if string.count("(") != string.count(")"):
-            print("Line {} doesn't have an equal number of left and right brackets! Aborting!".format(i+1))
-            return 1
+    if not novalidate:
+        for i, string in enumerate(nwks):
+            # Need to put in a strictor validator here
+            if string[-1] != ';':
+                print("Line {} doesn't end of a semicolon! Aborting!".format(i+1))
+                return 1
+            if string.count("(") != string.count(")"):
+                print("Line {} doesn't have an equal number of left and right brackets! Aborting!".format(i+1))
+                return 1
 
     print("Finding median tree. This might take a while!")
     median_nwks = median_triplet_trees(nwks, n_threads=n_threads)
