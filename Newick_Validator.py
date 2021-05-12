@@ -31,8 +31,7 @@ def find_branch(parsed_tokens):
             closed += 1
 
         if open - closed == 0:
-            if char == "," \
-                    and first_comma_index is None:
+            if char == "," and first_comma_index is None:
                 first_comma_index = char_index
 
     return first_comma_index
@@ -52,14 +51,14 @@ def parse_tree(parsed_tokens):
 # subtree -> leaf | internal
 def parse_subtree(parsed_tokens):
     try:
-        if parsed_tokens[0] == '(':
+        if parsed_tokens[0] == "(":
 
             # found an internal node
-            if parsed_tokens[-1] == ')':
+            if parsed_tokens[-1] == ")":
                 return parse_internal(parsed_tokens)
 
-            if ')' not in parsed_tokens:
-                print("Unbalanced parentheses in %s!" % ''.join(parsed_tokens))
+            if ")" not in parsed_tokens:
+                print("Unbalanced parentheses in %s!" % "".join(parsed_tokens))
                 return False
 
             else:
@@ -73,8 +72,8 @@ def parse_subtree(parsed_tokens):
 
         else:
 
-            if ')' in parsed_tokens:
-                print("Unbalanced parentheses in %s!" % ''.join(parsed_tokens))
+            if ")" in parsed_tokens:
+                print("Unbalanced parentheses in %s!" % "".join(parsed_tokens))
                 return False
 
             # found a leaf
@@ -89,22 +88,22 @@ def parse_subtree(parsed_tokens):
 def parse_name(name):
 
     # checking whether a string contains a space
-    if ' ' in name:
+    if " " in name:
         print("Error: space in %s." % name)
         return False
 
     # checking whether a string contains :
-    if ':' in name:
+    if ":" in name:
         print("Error: colon in %s." % name)
         return False
 
     # checking whether a string contains (
-    if '(' in name or ')' in name:
+    if "(" in name or ")" in name:
         print("Error: unbalanced parentheses in %s." % name)
         return False
 
     # checking whether a string contains ;
-    if ';' in name:
+    if ";" in name:
         print("Error: semicolon in %s." % name)
         return False
 
@@ -124,7 +123,7 @@ def parse_branchset(parsed_tokens):
 
         if parse_branch(parsed_tokens[0:comma]):
             # successful parsing
-            return parse_branchset(parsed_tokens[comma + 1:])
+            return parse_branchset(parsed_tokens[comma + 1 :])
 
         else:
             return False
@@ -138,7 +137,7 @@ def parse_branch(parsed_tokens):
 
     # length is not empty
     try:
-        if parsed_tokens[-2] == ':':
+        if parsed_tokens[-2] == ":":
             length_ok = parse_length(parsed_tokens[-1])
 
             # label or subtree are not empty
@@ -167,7 +166,7 @@ def parse_length(number):
 
 # internal --> "(" branchset ")" name
 def parse_internal(parsed_tokens):
-    if parsed_tokens[-1] != ')':
+    if parsed_tokens[-1] != ")":
         # name is not empty
         name_ok = parse_name(parsed_tokens[-1])
 
@@ -184,13 +183,16 @@ def parse_internal(parsed_tokens):
 # first function performing the initial controls
 def is_newick(tree):
     # dividing the string into tokens, to check them singularly
-    tokens = split(r'([A-Za-z]+[^A-Za-z,)]+[A-Za-z]+|[0-9.]*[A-Za-z]+[0-9.]+|[0-9.]+\s+[0-9.]+|[0-9.]+|[A-za-z]+|\(|\)|;|:|,)', tree)
+    tokens = split(
+        r"([A-Za-z]+[^A-Za-z,)]+[A-Za-z]+|[0-9.]*[A-Za-z]+[0-9.]+|[0-9.]+\s+[0-9.]+|[0-9.]+|[A-za-z]+|\(|\)|;|:|,)",
+        tree,
+    )
 
     # removing spaces and empty strings (spaces within labels are still present)
     parsed_tokens = list(filter(lambda x: not (x.isspace() or not x), tokens))
 
     # checking whether the tree ends with ;
-    if parsed_tokens[-1] != ';':
+    if parsed_tokens[-1] != ";":
         print("Tree without ; at the end.")
         return False
 
