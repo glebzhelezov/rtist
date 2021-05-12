@@ -7,6 +7,7 @@ binary: comb2
 	pyinstaller -F --hidden-import array --hidden-import cysignals median_triplet.py
 
 comb2: setup.py triplet_omp_py.pyx libctriplet.a tags
+	rm -fv *.c
 	python setup.py build_ext --inplace
 #	python setup.py develop
 
