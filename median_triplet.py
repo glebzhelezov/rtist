@@ -77,12 +77,14 @@ def main():
     # This should be refactored, but will work for now.
     try:
         with open(in_file, "r") as f:
+            print("* Stripping Newick strings.")
             nwks = [line.strip() for line in f]
     except IOError:
         print("Can't open input file {} for reading. Aborting.".format(in_file))
         return 1
 
     if not novalidate:
+        print("* Checking for matching parentheses and semicolon in each GT.")
         for i, string in enumerate(nwks):
             # Need to put in a strictor validator here
             if string[-1] != ';':

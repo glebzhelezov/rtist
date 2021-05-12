@@ -184,6 +184,7 @@ def process_nwks(nwks, n_threads=1):
     # Get rid of unnecessary info in Newick string
     nwks_simplified = [simplify_nwk(s) for s in nwks]
     # Map each name to an integer
+    print("* Finding all unique names.")
     names, dictionary, reverse_dictionary = get_names(nwks_simplified)
     # Get the number of species across all the GTs
     n_species = len(names)
@@ -197,10 +198,13 @@ def process_nwks(nwks, n_threads=1):
         )
     
     # Get the weights of the bipartitions in the GTs
+    print("* Calculating each GT bipartition's weight.")
     weights = get_weights(nwks_simplified, dictionary)
     # Get the biparts by the subset (i.e. (a+b)->[(a,b),...]
+    print("* Matching bipartitions to subsets.")
     biparts_by_subset = get_subset_biparts(nwks_simplified, dictionary)
     # Arrange data to be easily accessible by C code
+    print("* Forming arrays for computations.")
     subsets = []
     start_i = []
     end_i = []

@@ -83,6 +83,13 @@ def py_compressed_weight_rep(
     cdef int[::1] biparts_b_memview = ar_biparts_b
     cdef int[::1] bipart_weights_memview = ar_bipart_weights
 
+    threads_str = 'thread'
+    if n_threads > 1:
+        threads_str += 's'
+
+    print("Starting parallel comptuation with a max of {} {}.".
+            format(n_threads, threads_str)
+    )
     sig_on()
     fill_compressed_weight_representation(
             &subsets_memview[0],
