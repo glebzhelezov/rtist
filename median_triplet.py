@@ -26,6 +26,14 @@ def main():
         type=str,
         help="input file with one Newick string per line",
     )
+    parser.add_argument(
+        "o",
+        nargs="?",
+        action="store",
+        type=str,
+        help="output file (warning: any existing file will be overwritten!). Defaults to out_<input file>",
+        default=None,
+    )
     parser.add_argument('-v', '--version', action='version', version=median_triplet_version.__version__)
     parser.add_argument(
         "-t",
@@ -34,14 +42,6 @@ def main():
         type=int,
         default=-1,
         help="maximum number of concurrent threads (defaults to number of CPUs, or 1 if undetermined)",
-    )
-    parser.add_argument(
-        "-o",
-        "--outfile",
-        action="store",
-        type=str,
-        help="output file (warning: any existing file will be overwritten!). Defaults to out_<input file>",
-        default=None,
     )
     parser.add_argument(
         "-n",
@@ -54,7 +54,7 @@ def main():
     result = parser.parse_args()
 
     in_file = result.i
-    out_file = result.outfile
+    out_file = result.o
     n_threads = result.threads
     novalidate = result.novalidate
 
