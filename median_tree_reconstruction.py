@@ -7,7 +7,9 @@ from collections import deque, Counter
 from itertools import product
 from time import perf_counter
 
-__long_nwk_list__ = 1
+# I know I shouldn't do this :(
+# Only use multiprocessing for basic parsing if the list of nwks is quite long
+__long_nwk_list__ = 100000
 
 def simplify_nwk(s):
     """Returns Newick representation with only leaf names."""
@@ -138,7 +140,7 @@ def get_subset_biparts(nwks, dictionary):
     return biparts_per_subset
 
 def get_subset_biparts_parallel(nwks, dictionary, n_threads=1):
-    if len(nwks) < 2*n_threads:
+    if len(nwks) < 5*n_threads:
         # Don't bother if there's not many Newick strings
         return get_subset_biparts(nwks, dictionary)
     else:
