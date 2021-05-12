@@ -106,7 +106,6 @@ def get_biparts(nwk, dictionary):
 
 
 def get_subset_biparts(nwks, dictionary):
-    biparts = []
     biparts_per_subset = dict([])
 
     def recurse(s):
@@ -120,16 +119,15 @@ def get_subset_biparts(nwks, dictionary):
 
             subset = a + b
             bipart = (min(a, b), max(a, b))
-            # biparts.append(bipart)
 
             # List this bipart as belonging to the partition
             if subset in biparts_per_subset:
                 # print(subset)
                 if bipart not in biparts_per_subset[subset]:
-                    biparts_per_subset[subset].append(bipart)
+                    biparts_per_subset[subset].add(bipart)
             else:
                 # print(subset)
-                biparts_per_subset[subset] = [bipart]
+                biparts_per_subset[subset] = set([bipart])
 
             return subset
 
