@@ -6,6 +6,7 @@ from bitsnbobs import popcount, get_binary_subsets, init_bipart_rep_function
 from collections import deque, Counter
 from itertools import product
 from time import perf_counter
+from functools import partial
 
 # I know I shouldn't do this :(
 # Only use multiprocessing for basic parsing if the list of nwks is quite long
@@ -137,6 +138,14 @@ def get_subset_biparts(nwks, dictionary):
 
     return biparts_per_subset
 
+def _reducesets(bpses, k):
+    """Returns [bps[k] for bps in bpses if k in bps.keys()]. Created only
+    to overcome multiprocessing's limitations."""
+    return [bps[k] for bps in bpses if k in bps.keys()]
+
+def _get_subset_biparts_reversed_args(a,b):
+    return get_subset_biparts(b,a)
+
 def get_subset_biparts_parallel(nwks, dictionary, n_threads=1):
     if len(nwks) < 5*n_threads:
         # Don't bother if there's not many Newick strings
@@ -151,13 +160,13 @@ def get_subset_biparts_parallel(nwks, dictionary, n_threads=1):
         biparts_per_subset = dict([])
         with Pool(n_threads) as p:
             # Get the biparts per set in each subchunk of the data
-            bpses = p.starmap(get_subset_biparts, product(sublists, [dictionary]))
+            bpses = p.map(partial(_get_subset_biparts_reversed_args, dictionary), sublists)
+            #bpses = p.starmap(get_subset_biparts, product(sublists, [dictionary]))
             # Get the keys
             keys = {k for bps in bpses for k in bps.keys()}
-            bpses = [[bps[k] for bps in bpses if k in bps.keys()] for k in keys]
-
-            full_bpses = p.starmap(set.union, bpses)
-
+            bpses_individual = p.map(partial(_reducesets, bpses), keys)
+            # bpses = [[bps[k] for bps in bpses if k in bps.keys()] for k in keys]
+            full_bpses = p.starmap(set.union, bpses_individual)
             biparts_per_subset = {k:v for (k,v) in zip(keys, full_bpses)}
 
             # for bps in p.starmap(get_subset_biparts, product(sublists, [dictionary])):
