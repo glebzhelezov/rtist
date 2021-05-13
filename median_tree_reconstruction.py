@@ -6,6 +6,7 @@ from bitsnbobs import popcount, get_binary_subsets, init_bipart_rep_function
 from collections import deque, Counter
 from itertools import product
 from time import perf_counter
+from functools import partial
 
 # I know I shouldn't do this :(
 # Only use multiprocessing for basic parsing if the list of nwks is quite long
@@ -106,7 +107,6 @@ def get_biparts(nwk, dictionary):
 
 
 def get_subset_biparts(nwks, dictionary):
-    biparts = []
     biparts_per_subset = dict([])
 
     def recurse(s):
@@ -120,16 +120,15 @@ def get_subset_biparts(nwks, dictionary):
 
             subset = a + b
             bipart = (min(a, b), max(a, b))
-            # biparts.append(bipart)
 
             # List this bipart as belonging to the partition
             if subset in biparts_per_subset:
                 # print(subset)
                 if bipart not in biparts_per_subset[subset]:
-                    biparts_per_subset[subset].append(bipart)
+                    biparts_per_subset[subset].add(bipart)
             else:
                 # print(subset)
-                biparts_per_subset[subset] = [bipart]
+                biparts_per_subset[subset] = set([bipart])
 
             return subset
 
@@ -138,6 +137,14 @@ def get_subset_biparts(nwks, dictionary):
         recurse(nwk)
 
     return biparts_per_subset
+
+def _reducesets(bpses, k):
+    """Returns [bps[k] for bps in bpses if k in bps.keys()]. Created only
+    to overcome multiprocessing's limitations."""
+    return [bps[k] for bps in bpses if k in bps.keys()]
+
+def _get_subset_biparts_reversed_args(a,b):
+    return get_subset_biparts(b,a)
 
 def get_subset_biparts_parallel(nwks, dictionary, n_threads=1):
     if len(nwks) < 5*n_threads:
@@ -152,12 +159,22 @@ def get_subset_biparts_parallel(nwks, dictionary, n_threads=1):
 
         biparts_per_subset = dict([])
         with Pool(n_threads) as p:
-            for bps in p.starmap(get_subset_biparts, product(sublists, [dictionary])):
-                    for key in bps.keys():
-                        if key in biparts_per_subset:
-                            biparts_per_subset[key].update(bps[key])
-                        else:
-                            biparts_per_subset[key] = set(bps[key])
+            # Get the biparts per set in each subchunk of the data
+            bpses = p.map(partial(_get_subset_biparts_reversed_args, dictionary), sublists)
+            #bpses = p.starmap(get_subset_biparts, product(sublists, [dictionary]))
+            # Get the keys
+            keys = {k for bps in bpses for k in bps.keys()}
+            bpses_individual = p.map(partial(_reducesets, bpses), keys)
+            # bpses = [[bps[k] for bps in bpses if k in bps.keys()] for k in keys]
+            full_bpses = p.starmap(set.union, bpses_individual)
+            biparts_per_subset = {k:v for (k,v) in zip(keys, full_bpses)}
+
+            # for bps in p.starmap(get_subset_biparts, product(sublists, [dictionary])):
+            #         for key in bps.keys():
+            #             if key in biparts_per_subset:
+            #                 biparts_per_subset[key].update(bps[key])
+            #             else:
+            #                 biparts_per_subset[key] = set(bps[key])
 
         return biparts_per_subset
 
