@@ -139,6 +139,17 @@ def get_subset_biparts(nwks, dictionary):
 
     return biparts_per_subset
 
+def get_subset_biparts_fast(weights):
+    biparts_per_set = dict()
+    for (a,b) in weights.keys():
+        c=a+b
+        if c in biparts_per_set:
+            biparts_per_set[c].append((a,b))
+        else:
+            biparts_per_set[c]=[(a,b)]
+
+    return biparts_per_set 
+
 def _reducesets(bpses, k):
     """Returns [bps[k] for bps in bpses if k in bps.keys()]. Created only
     to overcome multiprocessing's limitations."""
@@ -289,7 +300,8 @@ def process_nwks(nwks, n_threads=1, bufsize=3*10**7):
     )
     # Get the biparts by the subset (i.e. (a+b)->[(a,b),...]
     print("* Matching bipartitions to subsets.")
-    biparts_by_subset = get_subset_biparts_parallel(nwks_simplified, dictionary, n_threads=n_threads)
+    biparts_by_subset = get_subset_biparts_fast(weights)
+    #biparts_by_subset = get_subset_biparts_parallel(nwks_simplified, dictionary, n_threads=n_threads)
     # Arrange data to be easily accessible by C code
     print("* Forming arrays for computations.")
     subsets = []
