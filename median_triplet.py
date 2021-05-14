@@ -2,6 +2,8 @@
 import argparse
 import sys
 import median_triplet_version
+from time import clock
+from datetime import timedelta
 from os import cpu_count
 from os.path import basename
 from median_tree_reconstruction import median_triplet_trees
@@ -17,6 +19,7 @@ class FriendlyParser(argparse.ArgumentParser):
 
 
 def main():
+    tic = clock()
     parser = FriendlyParser(
         description="Reads in a file of Newick strings, and outputs a file with all the median triplet trees."
     )
@@ -49,6 +52,14 @@ def main():
         help="maximum number of concurrent threads (defaults to number of CPUs, or 1 if undetermined)",
     )
     parser.add_argument(
+        "-b",
+        "--bufsize",
+        action="store",
+        type=int,
+        default=3*10**7,
+        help="update the weights array in chunks of this size. Increasing this number may make the computation faster, but will also increase the memory footprint (defaults to 30000000)",
+    )
+    parser.add_argument(
         "-n",
         "--novalidate",
         action="store_true",
@@ -61,6 +72,7 @@ def main():
     in_file = result.i
     out_file = result.o
     n_threads = result.threads
+    bufsize = result.bufsize
     novalidate = result.novalidate
 
     if out_file is None:
@@ -75,6 +87,7 @@ def main():
     print("Newick file: {}".format(in_file))
     print("Output file: {}".format(out_file))
     print("Max threads: {}".format(n_threads))
+    print("Buffer size: {} (pairs of integers per thread)".format(bufsize))
     if novalidate:
         print("Not validating Newick strings!")
     print("")
@@ -108,7 +121,7 @@ def main():
                 return 1
 
     print("Finding median tree. This might take a while!")
-    median_nwks = median_triplet_trees(nwks, n_threads=n_threads)
+    median_nwks = median_triplet_trees(nwks, n_threads=n_threads, bufsize=bufsize)
 
     try:
         with open(out_file, "w") as f:
@@ -124,6 +137,10 @@ def main():
         for s in median_nwks:
             print(s)
         print("")
+
+    toc=clock()
+
+    print("* Finished in {} hours:minutes:seconds.".format(timedelta(seconds=toc-tic)))
 
     return 0
 

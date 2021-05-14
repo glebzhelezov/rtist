@@ -132,14 +132,19 @@ void fill_compressed_weight_representation(
         int n_species,
         int *weights, /* Must be allocated with 0 in each entry. */
         int *two2three,
-        int n_threads) {
+        int n_threads,
+        int bufsize) {
     //printf("meow\n");
     /* Iterate over all the (sub)bi-partitions. */
+    /*int bufsize = atoi(getenv("TRIPLET_BUFSIZE"));*/
     int loop_progress = 0;
     progressbar *progbar = progressbar_new("Progress", n_subsets);
 #pragma omp parallel num_threads(n_threads)
     {
-        int *weights_private = calloc(2*ipow(3,n_species-1), sizeof(int));
+        /* int *weights_private = calloc(2*ipow(3,n_species-1), sizeof(int)); */
+        int *weights_buffer = calloc(bufsize, sizeof(int));
+        int *positions_buffer = calloc(bufsize, sizeof(int));
+        int buffer_position=0;
         int counter_private = 0;
         int n_threads_assigned = omp_get_num_threads();
         int output_step = round(n_subsets/(100*n_threads_assigned));
@@ -191,8 +196,27 @@ void fill_compressed_weight_representation(
                                 /* Put in code to calculate common # triplets. */
                                 /* Update precomputed weights. */
                                 int rep = compressed_rep(x, y, two2three);
+
                                 //weights_private[rep] += n_triplets * bipart_weight;
-                                weights_private[rep] += weight_increment;
+                                /*weights_private[rep] += weight_increment;*/
+                                /* We'll add this to the global weights array later */
+                                weights_buffer[buffer_position] += weight_increment;
+                                positions_buffer[buffer_position] = rep;
+                                buffer_position++;
+
+                                /* Check if it's time to update the weights
+                                 * array */
+                                if (buffer_position == bufsize) {
+                                    /* Only one thread accesses array to update */
+# pragma omp critical
+                                    for (int i=0; i<bufsize; i++) {
+                                        weights[positions_buffer[i]] += 
+                                            weights_buffer[i];
+                                    }
+                                    /* reset everything */
+                                    buffer_position = 0;
+                                    memset(weights_buffer, 0, bufsize*sizeof(int));
+                                }
 
                                 /* This is necessary to break out of an endless
                                  * loop! */
@@ -223,13 +247,19 @@ void fill_compressed_weight_representation(
                 }
             }
         }
+            /* Need to add in updates from partially-full buffers */
 # pragma omp critical
         {
-            for (int i=0; i<2*ipow(3,n_species-1); i++) {
-                weights[i] += weights_private[i];
+            for (int i=0; i<buffer_position; i++) {
+                weights[positions_buffer[i]] += weights_buffer[i];
             }
+            /*for (int i=0; i<2*ipow(3,n_species-1); i++) {
+                weights[i] += weights_private[i];
+            }*/
         }
-        free(weights_private);
+        /*free(weights_private);*/
+        free(weights_buffer);
+        free(positions_buffer);
     }
     progressbar_update(progbar, n_subsets);
     progressbar_finish(progbar);
