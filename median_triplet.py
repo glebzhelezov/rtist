@@ -2,7 +2,7 @@
 import argparse
 import sys
 import median_triplet_version
-from time import clock
+from time import time
 from datetime import timedelta
 from os import cpu_count
 from os.path import basename
@@ -19,7 +19,7 @@ class FriendlyParser(argparse.ArgumentParser):
 
 
 def main():
-    tic = clock()
+    tic = time()
     parser = FriendlyParser(
         description="Reads in a file of Newick strings, and outputs a file with all the median triplet trees."
     )
@@ -138,7 +138,7 @@ def main():
             print(s)
         print("")
 
-    toc=clock()
+    toc=time()
 
     print("* Finished in {} hours:minutes:seconds.".format(timedelta(seconds=toc-tic)))
 
