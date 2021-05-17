@@ -42,7 +42,7 @@ def get_names(gts_nwks, n_threads=1):
     names = set([])
 
     if len(gts_nwks) > __long_nwk_list__:
-        print("Many Newick strings, so doing this in parallel.")
+        print("    Many Newick strings, so doing this in parallel.")
 
         with Pool(n_threads) as p:
             for res in p.starmap(get_line_names, enumerate(gts_nwks)):
@@ -271,7 +271,7 @@ def process_nwks(nwks, n_threads=1):
     # Get rid of unnecessary info in Newick string
     nwks_simplified = []
     if len(nwks) > __long_nwk_list__:
-        print("Many Newick strings, so doing this in parallel.")
+        print("    Many Newick strings, so doing this in parallel.")
         with Pool(n_threads) as p:
             nwks_simplified.extend(p.map(simplify_nwk, nwks))
     else:
@@ -339,7 +339,7 @@ def process_nwks(nwks, n_threads=1):
         n_species,
         n_threads=n_threads,
     )
-    print("Done!")
+    #print("Done!")
 
     return triplet_weights, dictionary, reverse_dictionary
 
