@@ -179,7 +179,7 @@ def main():
     toc=time()
     dt = timedelta(seconds=toc-tic)
     
-    print("🤖🗩  Beep boop, finished in {:.2f} seconds.".format(dt.total_seconds()))
+    print("🤖💬 Beep boop, finished in {:.2f} seconds.".format(dt.total_seconds()))
 
     if printflag:
         print("")
