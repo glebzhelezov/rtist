@@ -25,7 +25,6 @@ cdef extern from "weights_omp.h" nogil:
         int *weights,
         int *two2three,
         int n_threads,
-        int bufsize,
         )
 #    void get_optimal_bipart(int full_set, int *left, int *right, int *weights, 
 #            int *two2three)
@@ -59,7 +58,7 @@ def create_two2three(n):
 
 def py_compressed_weight_rep(
         subsets, start_i, end_i, biparts_a, biparts_b, bipart_weights,
-        n_species, n_threads=8, bufsize=3*10**7,
+        n_species, n_threads=1
         ):
     """Computes the compressed representation of the bipartition weights."""
     # Copy the lists to arrays, to make them usable in C code
@@ -104,7 +103,6 @@ def py_compressed_weight_rep(
             &weights_memview[0],
             &two2three_memview[0],
             n_threads,
-            bufsize,
             )
     sig_off()
 

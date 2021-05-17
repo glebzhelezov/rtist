@@ -260,13 +260,13 @@ def get_stack(bipartition_weights, n_species):
     return stack, best_biparts
 
 
-def process_nwks(nwks, n_threads=1, bufsize=3*10**7):
+def process_nwks(nwks, n_threads=1):
     """Returns weights of bipartitions, dictionary, and reverse dictionary
     
     Input:
     nwks - list of Newick strings
     n_threads - n threads to use (default=1)
-    bufsize - chunk size with which to update the array (defaults to 3*10^6)"""
+    """
     print("* Parsing Newick strings and recording bipartitions in GTs.")
     # Get rid of unnecessary info in Newick string
     nwks_simplified = []
@@ -338,7 +338,6 @@ def process_nwks(nwks, n_threads=1, bufsize=3*10**7):
         bipart_weights,
         n_species,
         n_threads=n_threads,
-        bufsize=bufsize,
     )
     print("Done!")
 
@@ -385,9 +384,9 @@ def get_all_trees(x, dictionary, reverse_dictionary, best_biparts):
     ]
 
 
-def median_triplet_trees(nwks, n_threads=1, bufsize=3*10**7):
+def median_triplet_trees(nwks, n_threads=1):
     triplet_weights, dictionary, reverse_dictionary = process_nwks(
-        nwks, n_threads=n_threads, bufsize=bufsize,
+        nwks, n_threads=n_threads,
     )
 
     stack, best_biparts = get_stack(triplet_weights, len(dictionary))

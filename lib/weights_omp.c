@@ -132,39 +132,33 @@ void fill_compressed_weight_representation(
         int n_species,
         int *weights, /* Must be allocated with 0 in each entry. */
         int *two2three,
-        int n_threads,
-        int bufsize) {
-    //printf("meow\n");
+        int n_threads) {
     /* Iterate over all the (sub)bi-partitions. */
-    /*int bufsize = atoi(getenv("TRIPLET_BUFSIZE"));*/
     int loop_progress = 0;
-    /* We'll make the buffer sizes slightly different to avoid
-     * unnecessary locks. Set the seed to 0 for reproducibility. */
     progressbar *progbar = progressbar_new("Progress", n_subsets);
 #pragma omp parallel num_threads(n_threads)
     {
-        //int private_bufsize = (int) ((0.7 + 0.3*(rand()%200)/100)*bufsize);
-        /* int private_bufsize = int(0.7*bufsize) + (0.3*bufsize(rand() % 200)/100.0);*/
-        /* int *weights_private = calloc(2*ipow(3,n_species-1), sizeof(int)); */
-        int counter_private = 0;
+        /* Get actual number of threads, and this thread's ID */
         int n_threads_assigned = omp_get_num_threads();
+        int thread_id_private = omp_get_thread_num();
+        /* Calculate the progress this thread is making, to eventually add
+         * to the progress bar. */
+        int counter_private = 0;
+        /* Update total counter every output_step number of steps */
         int output_step = round(n_subsets/(100*n_threads_assigned));
         output_step = (output_step > 1) ? output_step : 1;
-        int thread_id_private = omp_get_thread_num();
+        /* This is the binary number with 1s everywhere, which represents the
+         * set of all species in the data. */
         int universe = (1<<n_species) - 1;
         /* Iterate over all possible values of a+b, where (a,b) is a bipart. */
 #pragma omp for schedule(static)
         for (int subset_i=0; subset_i<n_subsets; subset_i++) {
             int bitmask = subsets[subset_i];
-            /* 1<<n_species == 2^n_species; */
-            /*int a = left_sets[i];
-              int b = right_sets[i];*/
             int kernel = universe - bitmask;
 
             /* This iterates over all numbers with bits set only where
              * bitmask has set bits, excluding bitmask. */
             int a_prime = bitmask & (bitmask - 1);
-            /*int bipart_weight = bipart_weights[i];*/
 
             /* We should iterate over possible a+b sums */
             for (int a_prime=bitmask&(bitmask-1); a_prime>0;
@@ -194,13 +188,10 @@ void fill_compressed_weight_representation(
                                 int x = a_prime + k1;
                                 int y = b_prime + k2;
 
-                                /* Put in code to calculate common # triplets. */
-                                /* Update precomputed weights. */
+                                /* Base-3 representation of bipart */
                                 int rep = compressed_rep(x, y, two2three);
 
-                                //weights_private[rep] += n_triplets * bipart_weight;
-                                /*weights_private[rep] += weight_increment;*/
-                                /* We'll add this to the global weights array later */
+                                /* Update the weights array */
 # pragma omp atomic update
                                 weights[rep] += weight_increment;
 
@@ -222,18 +213,16 @@ void fill_compressed_weight_representation(
             counter_private++;
 
             if (counter_private % output_step == 0) {
+                /* Update the overall counter one thread at a time */
 # pragma omp atomic update
                 loop_progress = loop_progress + counter_private;
                 counter_private = 0;
-
+                /* Only update the progress bar by the master thread */
                 if (thread_id_private == 0) {
-                    /*printf("Loop progress: %d\n", loop_progress);*/
                     progressbar_update(progbar, loop_progress);
-                    //fflush(stdout);
                 }
             }
         }
-        /*free(weights_private);*/
     }
     progressbar_update(progbar, n_subsets);
     progressbar_finish(progbar);
