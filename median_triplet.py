@@ -10,13 +10,6 @@ from median_tree_reconstruction import median_triplet_trees
 
 
 # Some fun colors. Should be refactored. Or removed. :-)
-purple = '\033[95m'
-cyan = '\033[96m'
-darkcyan = '\033[36m'
-blue = '\033[94m'
-green = '\033[92m'
-yellow = '\033[93m'
-red = '\033[91m'
 bold = '\033[1m'
 underline = '\033[4m'
 italics = '\033[3m'
@@ -140,7 +133,10 @@ def main():
     if not novalidate:
         print("* Checking for matching parentheses and semicolon in each GT.")
         for i, string in enumerate(nwks):
-            # Need to put in a strictor validator here
+            # Ignore comments
+            if string[0] == '#':
+                continue
+            # Need to put in a stricter validator here
             if string[-1] != ";":
                 print(
                     "Line {} doesn't end of a semicolon! Aborting!".format(
