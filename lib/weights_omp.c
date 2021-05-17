@@ -138,12 +138,17 @@ void fill_compressed_weight_representation(
     /* Iterate over all the (sub)bi-partitions. */
     /*int bufsize = atoi(getenv("TRIPLET_BUFSIZE"));*/
     int loop_progress = 0;
+    /* We'll make the buffer sizes slightly different to avoid
+     * unnecessary locks. Set the seed to 0 for reproducibility. */
+    srand(0);
     progressbar *progbar = progressbar_new("Progress", n_subsets);
 #pragma omp parallel num_threads(n_threads)
     {
+        int private_bufsize = (int) ((0.7 + 0.3*(rand()%200)/100)*bufsize);
+        /* int private_bufsize = int(0.7*bufsize) + (0.3*bufsize(rand() % 200)/100.0);*/
         /* int *weights_private = calloc(2*ipow(3,n_species-1), sizeof(int)); */
-        int *weights_buffer = calloc(bufsize, sizeof(int));
-        int *positions_buffer = calloc(bufsize, sizeof(int));
+        int *weights_buffer = calloc(private_bufsize, sizeof(int));
+        int *positions_buffer = calloc(private_bufsize, sizeof(int));
         int buffer_position=0;
         int counter_private = 0;
         int n_threads_assigned = omp_get_num_threads();
@@ -206,16 +211,20 @@ void fill_compressed_weight_representation(
 
                                 /* Check if it's time to update the weights
                                  * array */
-                                if (buffer_position == bufsize) {
+                                if (buffer_position == private_bufsize) {
                                     /* Only one thread accesses array to update */
 # pragma omp critical
-                                    for (int i=0; i<bufsize; i++) {
+                                    for (int i=0; i<private_bufsize; i++) {
                                         weights[positions_buffer[i]] += 
                                             weights_buffer[i];
                                     }
                                     /* reset everything */
                                     buffer_position = 0;
-                                    memset(weights_buffer, 0, bufsize*sizeof(int));
+                                    memset(weights_buffer, 0, private_bufsize*sizeof(int));
+                                    /* For large-ish arrays it is faster to calloc */
+                                    /*free(weights_buffer);
+                                    weights_buffer = calloc(private_bufsize, sizeof(int));*/
+
                                 }
 
                                 /* This is necessary to break out of an endless
