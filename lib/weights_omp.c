@@ -157,7 +157,7 @@ void fill_compressed_weight_representation(
         int thread_id_private = omp_get_thread_num();
         int universe = (1<<n_species) - 1;
         /* Iterate over all possible values of a+b, where (a,b) is a bipart. */
-#pragma omp for schedule(dynamic)
+#pragma omp for schedule(static)
         for (int subset_i=0; subset_i<n_subsets; subset_i++) {
             int bitmask = subsets[subset_i];
             /* 1<<n_species == 2^n_species; */
