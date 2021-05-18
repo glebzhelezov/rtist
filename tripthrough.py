@@ -5,9 +5,8 @@ import pickle
 import random
 import itertools
 import median_triplet_version
+import textwrap
 from bitsnbobs import init_bipart_rep_function, get_binary_subsets, popcount
-from median_tree_reconstruction import get_all_trees
-from mediantriplet import FriendlyParser
 
 # Some fun colors. Should be refactored. Or removed. :-)
 bold = "\033[1m"
@@ -15,6 +14,36 @@ underline = "\033[4m"
 italics = "\033[3m"
 end = "\033[0m"
 
+# Trick by Steven Berthard
+# https://groups.google.com/g/argparse-users/c/LazV_tEQvQw
+# https://stackoverflow.com/questions/4042452/display-help-message-with-python-argparse-when-script-is-called-without-any-argu
+class FriendlyParser(argparse.ArgumentParser):
+    def error(self, message):
+        sys.stderr.write("error: {}\n".format(message))
+        self.print_help()
+        sys.exit(2)
+
+def pickle_warning(filename):
+    print(bold+"From the Python 3 manual:"+end)
+    s = "Only unpickle data you trust. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling. Never unpickle data that could have come from an untrusted source, or that could have been tampered with."
+    lines = textwrap.wrap(s)
+    s = italics+"\n".join(lines)+end
+    print(s)
+    print()
+    s = "You can avoid this interactive warning in the future by using the -y flag."
+    lines = textwrap.wrap(s)
+    print('\n'.join(lines))
+    print()
+
+    verification = ''
+
+    while verification not in {'y', 'n'}:
+        verification = input("Load the file {}? (y/n) ".format(filename))
+        verification = verification.lower().strip()
+
+    if verification == 'n':
+        print("Aborting.")
+        sys.exit(0)
 
 def get_biparts(x):
     """These are just the pairs where a < x-a and x&a=0"""
@@ -291,6 +320,13 @@ def get_parser():
         default=0,
     )
     parser.add_argument(
+        "-y",
+        "--yes",
+        action="store_true",
+        default=False,
+        help="don't ask for confirmation to load a pickle file",
+    )
+    parser.add_argument(
         "-v",
         "--version",
         action="version",
@@ -334,6 +370,11 @@ def main():
     print("Burnin count:", cli_flags.burnin)
     print("RNG seed    :", cli_flags.seed)
 
+    # Warn the user about the pickle, it is the moral thing to do!
+    if not cli_flags.yes:
+        print()
+        pickle_warning(cli_flags.i)
+
     print()
     print(underline + "Processing pickle" + end)
     try:
@@ -342,6 +383,7 @@ def main():
             try:
                 unpickled = pickle.load(f)
             except:
+                print(e)
                 print("Can't unpickle (wrong file?). Aborting.")
                 return 1
     except:

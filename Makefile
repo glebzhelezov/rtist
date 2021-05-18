@@ -4,7 +4,9 @@ VERSION := $(shell git describe --tags)
 default: binary
 
 binary: comb2
-	pyinstaller -F --hidden-import array --hidden-import cysignals median_triplet.py
+	pyinstaller -F --hidden-import array --hidden-import cysignals mediantriplet.py
+	pyinstaller -F --hidden-import array tripthrough.py
+
 
 comb2: setup.py triplet_omp_py.pyx libctriplet.a tags
 	rm -fv *.c
