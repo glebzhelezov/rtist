@@ -25,9 +25,7 @@ class FriendlyParser(argparse.ArgumentParser):
         self.print_help()
         sys.exit(2)
 
-
-def main():
-    tic = time()
+def get_parser():
     parser = FriendlyParser(
         description="Reads in a file of Newick strings, and outputs a file with all the median triplet trees."
     )
@@ -84,6 +82,12 @@ def main():
         help="save the weights array to a binary file. This file can be used to find additional trees. Traditionally this file has the extension .p",
     )
 
+    return parser
+
+def main():
+    tic = time()
+
+    parser = get_parser()
     result = parser.parse_args()
 
     in_file = result.i
@@ -113,10 +117,10 @@ def main():
     if n_threads is None:
         n_threads = 1
 
-    print(underline + "Input parameters" + end)
+    print(underline + "Input parameters:" + end)
     print("Newick file: {}".format(in_file))
     if nosave:
-        print("Output file: outputing to stdout instead.")
+        print("Output file: outputting to stdout instead.")
     else:
         print("Output file: {}".format(out_file))
 
@@ -156,9 +160,13 @@ def main():
 
     print("")
     print(underline + "Finding median tree. This might take a while!" + end)
-    median_nwks, reverse_dictionary, triplet_weights, stack, best_biparts = median_triplet_trees(
-        nwks, n_threads=n_threads, return_extra=True
-    )
+    (
+        median_nwks,
+        reverse_dictionary,
+        triplet_weights,
+        stack,
+        best_biparts,
+    ) = median_triplet_trees(nwks, n_threads=n_threads, return_extra=True)
 
     print("")
     print("{}{}Done!{}{}".format(bold, underline, end, end))
@@ -192,17 +200,36 @@ def main():
     if picklename is not None:
         try:
             with open(picklename, "wb") as f:
-                labels = ['nwks', 'median_nwks', 'reverse_dictionary', 'triplet_weights', 'stack', 'best_biparts']
-                to_pickle = [nwks, median_nwks, reverse_dictionary, triplet_weights, stack, best_biparts]
+                labels = [
+                    "abigsecret",
+                    "version",
+                    "nwks",
+                    "median_nwks",
+                    "reverse_dictionary",
+                    "triplet_weights",
+                    "stack",
+                    "best_biparts",
+                ]
+                to_pickle = [
+                    "ogurets",
+                    median_triplet_version.__version__,
+                    nwks,
+                    median_nwks,
+                    reverse_dictionary,
+                    triplet_weights,
+                    stack,
+                    best_biparts,
+                ]
 
-                pickle.dump({l:t for (l,t) in zip(labels,to_pickle)}, f, protocol=4)
+                pickle.dump({l: t for (l, t) in zip(labels, to_pickle)}, f, protocol=4)
 
-                #for item in to_pickle:
+                # for item in to_pickle:
                 #    pickle.dump(item, f, protocol=4)
             print(
-                "* {}Serialized computed data to {}{}{}.".format(
-                    bold, italics, picklename, end, end)
+                "* {}Pickled weights to {}{}{}. 🥒🏋️".format(
+                    bold, italics, picklename, end, end
                 )
+            )
         except IOError:
             print(
                 "Can't write to {}. Aborting serializing the processed data.".format(
