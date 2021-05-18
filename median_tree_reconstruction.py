@@ -353,7 +353,7 @@ def get_present_species(x, reverse_dictionary):
     ]
 
 
-def _get_all_trees(x, dictionary, reverse_dictionary, best_biparts):
+def _get_all_trees(x, reverse_dictionary, best_biparts):
     all_trees = []
     if popcount(x) == 1:
         names = get_present_species(x, reverse_dictionary)
@@ -364,10 +364,10 @@ def _get_all_trees(x, dictionary, reverse_dictionary, best_biparts):
     else:
         for (a, b) in best_biparts[x]:
             a_trees = _get_all_trees(
-                a, dictionary, reverse_dictionary, best_biparts
+                a, reverse_dictionary, best_biparts
             )
             b_trees = _get_all_trees(
-                b, dictionary, reverse_dictionary, best_biparts
+                b, reverse_dictionary, best_biparts
             )
 
             for a_prime in a_trees:
@@ -377,28 +377,42 @@ def _get_all_trees(x, dictionary, reverse_dictionary, best_biparts):
     return all_trees
 
 
-def get_all_trees(x, dictionary, reverse_dictionary, best_biparts):
+def get_all_trees(x, reverse_dictionary, best_biparts):
     return [
         t + ";"
-        for t in _get_all_trees(x, dictionary, reverse_dictionary, best_biparts)
+        for t in _get_all_trees(x, reverse_dictionary, best_biparts)
     ]
 
 
-def median_triplet_trees(nwks, n_threads=1):
+def median_triplet_trees(nwks, n_threads=1, return_extra=False):
     triplet_weights, dictionary, reverse_dictionary = process_nwks(
         nwks, n_threads=n_threads,
     )
+    """Computes the stack and the best biparts for each subset, then finds
+    all the median trees.
 
-    stack, best_biparts = get_stack(triplet_weights, len(dictionary))
+    Input:
+    nwks - list of Newick strings without semicolons
+    n_threads - #threads to use
+    return_extra - set to get stack, lists of best biparts, and reverse dictionary
+    """
+
+    n_species = len(reverse_dictionary)
+
+    stack, best_biparts = get_stack(triplet_weights, n_species)
     # bitset representation of all the tips
-    x = 2 ** len(reverse_dictionary) - 1
-    n = len(dictionary)
+    x = 2**n_species - 1
     # This assumes each GT has all the species, so this is actually not a
     # sharp upper bound!
-    theoretical_bound = len(nwks) * n * (n - 1) * (n - 2) // 6
+    theoretical_bound = len(nwks) * n_species * (n_species - 1) * (n_species - 2) // 6
     print(
         "Best possible triplet count is {}, out of a maximum of {}.".format(
             stack[x], theoretical_bound
         )
     )
-    return get_all_trees(x, dictionary, reverse_dictionary, best_biparts)
+
+    trees = get_all_trees(x, reverse_dictionary, best_biparts)
+    if return_extra:
+        return trees, reverse_dictionary, triplet_weights, stack, best_biparts
+    else:
+        return trees

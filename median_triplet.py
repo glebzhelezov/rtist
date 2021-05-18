@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import argparse
 import sys
+import pickle
 import median_triplet_version
 from time import time
 from datetime import timedelta
@@ -10,10 +11,10 @@ from median_tree_reconstruction import median_triplet_trees
 
 
 # Some fun colors. Should be refactored. Or removed. :-)
-bold = '\033[1m'
-underline = '\033[4m'
-italics = '\033[3m'
-end = '\033[0m'
+bold = "\033[1m"
+underline = "\033[4m"
+italics = "\033[3m"
+end = "\033[0m"
 
 # Trick by Steven Berthard
 # https://groups.google.com/g/argparse-users/c/LazV_tEQvQw
@@ -45,10 +46,7 @@ def main():
         default=None,
     )
     parser.add_argument(
-        "-v",
-        "--version",
-        action="version",
-        version=median_triplet_version.__version__,
+        "-v", "--version", action="version", version=median_triplet_version.__version__,
     )
     parser.add_argument(
         "-t",
@@ -78,6 +76,13 @@ def main():
         help="print the output to the screen",
         default=False,
     )
+    parser.add_argument(
+        "-b",
+        "--binary",
+        action="store",
+        type=str,
+        help="save the weights array to a binary file. This file can be used to find additional trees. Traditionally this file has the extension .p",
+    )
 
     result = parser.parse_args()
 
@@ -87,9 +92,12 @@ def main():
     novalidate = result.novalidate
     nosave = result.nosave
     printflag = result.print
+    picklename = result.binary
 
     if nosave and not printflag:
-        print("The flag --nosave cannot be used without --print, otherwise the output goes nowhere. Aborting.")
+        print(
+            "The flag --nosave cannot be used without --print, otherwise the output goes nowhere. Aborting."
+        )
         return 1
 
     if not (n_threads >= 1 or n_threads == -1):
@@ -105,7 +113,7 @@ def main():
     if n_threads is None:
         n_threads = 1
 
-    print(underline+"Input parameters"+end)
+    print(underline + "Input parameters" + end)
     print("Newick file: {}".format(in_file))
     if nosave:
         print("Output file: outputing to stdout instead.")
@@ -115,10 +123,8 @@ def main():
     print("Max threads: {}".format(n_threads))
     if novalidate:
         print("Not validating Newick strings!")
-    
 
     print("")
-
 
     # This should be refactored, but will work for now.
     try:
@@ -134,15 +140,11 @@ def main():
         print("* Checking for matching parentheses and semicolon in each GT.")
         for i, string in enumerate(nwks):
             # Ignore comments
-            if string[0] == '#':
+            if string[0] == "#":
                 continue
             # Need to put in a stricter validator here
             if string[-1] != ";":
-                print(
-                    "Line {} doesn't end of a semicolon! Aborting!".format(
-                        i + 1
-                    )
-                )
+                print("Line {} doesn't end of a semicolon! Aborting!".format(i + 1))
                 return 1
             if string.count("(") != string.count(")"):
                 print(
@@ -152,36 +154,62 @@ def main():
                 )
                 return 1
 
+    print("")
     print(underline + "Finding median tree. This might take a while!" + end)
-    median_nwks = median_triplet_trees(nwks, n_threads=n_threads)
+    median_nwks, reverse_dictionary, triplet_weights, stack, best_biparts = median_triplet_trees(
+        nwks, n_threads=n_threads, return_extra=True
+    )
 
-
-
+    print("")
+    print("{}{}Done!{}{}".format(bold, underline, end, end))
     # Save output
     if not nosave:
         try:
             with open(out_file, "w") as f:
                 f.writelines([s + "\n" for s in median_nwks])
-            print("* {}Wrote all median triplet trees to {}{}{}.".format(bold, italics, out_file, end,end))
-        except IOError:
             print(
-                "Can't open output file {} for writing. Outputting to stdout instead.".format(
-                    outfile
+                "* {}Wrote all median triplet trees to {}{}{}.".format(
+                    bold, italics, out_file, end, end
                 )
             )
+        except IOError:
+            print("Can't write to {}. Outputting to stdout instead.".format(outfile))
             # If can't write to file, output to screen as a last resort
             printflag = True
 
-    toc=time()
-    dt = timedelta(seconds=toc-tic)
-    
+    toc = time()
+    dt = timedelta(seconds=toc - tic)
+
     print("🤖💬 Beep boop, finished in {:.2f} seconds.".format(dt.total_seconds()))
 
     if printflag:
         print("")
         for s in median_nwks:
             print(s)
-        #print("")
+        # print("")
+
+    # Pickle stuff
+    if picklename is not None:
+        try:
+            with open(picklename, "wb") as f:
+                labels = ['nwks', 'median_nwks', 'reverse_dictionary', 'triplet_weights', 'stack', 'best_biparts']
+                to_pickle = [nwks, median_nwks, reverse_dictionary, triplet_weights, stack, best_biparts]
+
+                pickle.dump({l:t for (l,t) in zip(labels,to_pickle)}, f, protocol=4)
+
+                #for item in to_pickle:
+                #    pickle.dump(item, f, protocol=4)
+            print(
+                "* {}Serialized computed data to {}{}{}.".format(
+                    bold, italics, picklename, end, end)
+                )
+        except IOError:
+            print(
+                "Can't write to {}. Aborting serializing the processed data.".format(
+                    picklename
+                )
+            )
+
     return 0
 
 
