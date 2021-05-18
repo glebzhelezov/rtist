@@ -178,8 +178,13 @@ def get_candidates(
 
     # Now we take a random walk along each started path; choose the starting
     # paths uniformly
-    print("* Picking random subset of tree candidates")
-    chosen_paths = rng.choices(candidates + finished_candidates, k=n_trees,)
+    n_candidates = len(candidates) + len(finished_candidates)
+    if n_candidates < n_trees:
+        print("* Could only find {} trees satisfying the constraint ({} requested)".format(n_candidates, n_trees))
+        chosen_paths = candidates + finished_candidates
+    else:
+        print("* Picking random subset of tree candidates")
+        chosen_paths = rng.choices(candidates + finished_candidates, k=n_trees,)
 
     ### Fully split-up the remaining candidates
 
