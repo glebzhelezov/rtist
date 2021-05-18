@@ -263,7 +263,7 @@ def get_nwk(x, reverse_dictionary, biparts):
 
 def get_parser():
     parser = FriendlyParser(
-        description="Takes a pickled (serialized) weights file, and outputs trees with suboptimal scores that are greater than a set minimum. The output is sorted in descending score order, and each trees' score is commented above."
+        description="Takes a pickled (serialized) weights file, and outputs trees with suboptimal scores that are greater than a set minimum. The output is sorted in descending score order, and each tree's score is in commented-out line above the Newick string."
     )
     parser.add_argument(
         "i",
