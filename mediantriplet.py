@@ -158,6 +158,9 @@ def main():
                 )
                 return 1
 
+    # Get rid of comments
+    nwks[:] = [s for s in nwks if s[0] != '#']
+
     print("")
     print(underline + "Finding median tree. This might take a while!" + end)
     (
