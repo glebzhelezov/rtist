@@ -2,16 +2,18 @@ import re
 import triplet_omp
 import snoob
 from multiprocessing import Pool
-from bitsnbobs import popcount, get_binary_subsets, init_bipart_rep_function
 from collections import deque, Counter
 from itertools import product
 from time import perf_counter
 from functools import partial
 from random import Random
+from textwrap import fill
+from bitsnbobs import popcount, get_binary_subsets, init_bipart_rep_function
 
 # I know I shouldn't do this :(
 # Only use multiprocessing for basic parsing if the list of nwks is quite long
 __long_nwk_list__ = 100000
+
 
 def simplify_nwk(s):
     """Returns Newick representation with only leaf names."""
@@ -107,88 +109,23 @@ def get_biparts(nwk, dictionary):
     return biparts
 
 
-def get_subset_biparts(nwks, dictionary):
-    biparts_per_subset = dict([])
-
-    def recurse(s):
-        split = splitter(s)
-
-        if len(split) == 1:
-            return 2 ** dictionary[split[0]]
-        if len(split) == 2:
-            a = recurse(split[0])
-            b = recurse(split[1])
-
-            subset = a + b
-            bipart = (min(a, b), max(a, b))
-
-            # List this bipart as belonging to the partition
-            if subset in biparts_per_subset:
-                # print(subset)
-                if bipart not in biparts_per_subset[subset]:
-                    biparts_per_subset[subset].add(bipart)
-            else:
-                # print(subset)
-                biparts_per_subset[subset] = set([bipart])
-
-            return subset
-
-    # fill up the biparts list
-    for nwk in nwks:
-        recurse(nwk)
-
-    return biparts_per_subset
-
-def get_subset_biparts_fast(weights):
+def get_subset_biparts(weights):
     biparts_per_set = dict()
-    for (a,b) in weights.keys():
-        c=a+b
+    for (a, b) in weights.keys():
+        c = a + b
         if c in biparts_per_set:
-            biparts_per_set[c].append((a,b))
+            biparts_per_set[c].append((a, b))
         else:
-            biparts_per_set[c]=[(a,b)]
+            biparts_per_set[c] = [(a, b)]
 
-    return biparts_per_set 
+    return biparts_per_set
+
 
 def _reducesets(bpses, k):
     """Returns [bps[k] for bps in bpses if k in bps.keys()]. Created only
     to overcome multiprocessing's limitations."""
     return [bps[k] for bps in bpses if k in bps.keys()]
 
-def _get_subset_biparts_reversed_args(a,b):
-    return get_subset_biparts(b,a)
-
-def get_subset_biparts_parallel(nwks, dictionary, n_threads=1):
-    if len(nwks) < 5*n_threads:
-        # Don't bother if there's not many Newick strings
-        return get_subset_biparts(nwks, dictionary)
-    else:
-        n_nwks = len(nwks)
-        sublist_size = n_nwks//n_threads
-        remainder = n_nwks % n_threads
-        sublists = [nwks[i*sublist_size:(i+1)*sublist_size] for i in range(0, n_threads)]
-        sublists[-1].extend(nwks[-remainder:])
-
-        biparts_per_subset = dict([])
-        with Pool(n_threads) as p:
-            # Get the biparts per set in each subchunk of the data
-            bpses = p.map(partial(_get_subset_biparts_reversed_args, dictionary), sublists)
-            #bpses = p.starmap(get_subset_biparts, product(sublists, [dictionary]))
-            # Get the keys
-            keys = {k for bps in bpses for k in bps.keys()}
-            bpses_individual = p.map(partial(_reducesets, bpses), keys)
-            # bpses = [[bps[k] for bps in bpses if k in bps.keys()] for k in keys]
-            full_bpses = p.starmap(set.union, bpses_individual)
-            biparts_per_subset = {k:v for (k,v) in zip(keys, full_bpses)}
-
-            # for bps in p.starmap(get_subset_biparts, product(sublists, [dictionary])):
-            #         for key in bps.keys():
-            #             if key in biparts_per_subset:
-            #                 biparts_per_subset[key].update(bps[key])
-            #             else:
-            #                 biparts_per_subset[key] = set(bps[key])
-
-        return biparts_per_subset
 
 def get_weights(gts_nwks, dictionary):
     weights = {}
@@ -207,7 +144,7 @@ def get_weights(gts_nwks, dictionary):
 def get_weights_parallel(gts_nwks, dictionary, n_threads=1):
     """Find the weights of the data biparts."""
 
-    if len(gts_nwks) < 30*n_threads:
+    if len(gts_nwks) < 30 * n_threads:
         return get_weights(gts_nwks, dictionary)
 
     all_biparts = deque()
@@ -262,7 +199,7 @@ def get_stack(bipartition_weights, n_species):
 
 def process_nwks(nwks, n_threads=1):
     """Returns weights of bipartitions, dictionary, and reverse dictionary
-    
+
     Input:
     nwks - list of Newick strings
     n_threads - n threads to use (default=1)
@@ -287,21 +224,22 @@ def process_nwks(nwks, n_threads=1):
     # reasonable on modern hardware.
     if n_species > 18:
         print(
-            "Warning: attempting to find exact tree with {} tips. The computation might run out of memory, or take an unreasonable amount of time.".format(
-                n_species
+            fill(
+                "Warning: attempting to find exact tree with {} tips. The "
+                "computation might run out of memory, or take an unreasonable "
+                "amount of time.".format(n_species)
             )
         )
 
     # Get the weights of the bipartitions in the GTs
     print("* Calculating each GT bipartition's weight.")
-    #weights = get_weights(nwks_simplified, dictionary)
+    # weights = get_weights(nwks_simplified, dictionary)
     weights = get_weights_parallel(
         nwks_simplified, dictionary, n_threads=n_threads
     )
     # Get the biparts by the subset (i.e. (a+b)->[(a,b),...]
     print("* Matching bipartitions to subsets.")
-    biparts_by_subset = get_subset_biparts_fast(weights)
-    #biparts_by_subset = get_subset_biparts_parallel(nwks_simplified, dictionary, n_threads=n_threads)
+    biparts_by_subset = get_subset_biparts(weights)
     # Arrange data to be easily accessible by C code
     print("* Forming arrays for computations.")
     subsets = []
@@ -339,7 +277,7 @@ def process_nwks(nwks, n_threads=1):
         n_species,
         n_threads=n_threads,
     )
-    #print("Done!")
+    # print("Done!")
 
     return triplet_weights, dictionary, reverse_dictionary
 
@@ -363,12 +301,8 @@ def _get_all_trees(x, reverse_dictionary, best_biparts):
         all_trees.append("({},{})".format(*names))
     else:
         for (a, b) in best_biparts[x]:
-            a_trees = _get_all_trees(
-                a, reverse_dictionary, best_biparts
-            )
-            b_trees = _get_all_trees(
-                b, reverse_dictionary, best_biparts
-            )
+            a_trees = _get_all_trees(a, reverse_dictionary, best_biparts)
+            b_trees = _get_all_trees(b, reverse_dictionary, best_biparts)
 
             for a_prime in a_trees:
                 for b_prime in b_trees:
@@ -379,8 +313,7 @@ def _get_all_trees(x, reverse_dictionary, best_biparts):
 
 def get_all_trees(x, reverse_dictionary, best_biparts):
     return [
-        t + ";"
-        for t in _get_all_trees(x, reverse_dictionary, best_biparts)
+        t + ";" for t in _get_all_trees(x, reverse_dictionary, best_biparts)
     ]
 
 
@@ -394,17 +327,20 @@ def median_triplet_trees(nwks, n_threads=1, return_extra=False):
     Input:
     nwks - list of Newick strings without semicolons
     n_threads - #threads to use
-    return_extra - set to get stack, lists of best biparts, and reverse dictionary
+    return_extra - set to get stack, lists of best biparts,
+                and reverse dictionary
     """
 
     n_species = len(reverse_dictionary)
 
     stack, best_biparts = get_stack(triplet_weights, n_species)
     # bitset representation of all the tips
-    x = 2**n_species - 1
+    x = 2 ** n_species - 1
     # This assumes each GT has all the species, so this is actually not a
     # sharp upper bound!
-    theoretical_bound = len(nwks) * n_species * (n_species - 1) * (n_species - 2) // 6
+    theoretical_bound = (
+        len(nwks) * n_species * (n_species - 1) * (n_species - 2) // 6
+    )
     print(
         "Best possible triplet count is {}, out of a maximum of {}.".format(
             stack[x], theoretical_bound

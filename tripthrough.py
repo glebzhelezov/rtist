@@ -14,6 +14,7 @@ underline = "\033[4m"
 italics = "\033[3m"
 end = "\033[0m"
 
+
 # Trick by Steven Berthard
 # https://groups.google.com/g/argparse-users/c/LazV_tEQvQw
 # https://stackoverflow.com/questions/4042452/display-help-message-with-python-argparse-when-script-is-called-without-any-argu
@@ -23,27 +24,37 @@ class FriendlyParser(argparse.ArgumentParser):
         self.print_help()
         sys.exit(2)
 
+
 def pickle_warning(filename):
-    print(bold+"From the Python 3 manual:"+end)
-    s = "Only unpickle data you trust. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling. Never unpickle data that could have come from an untrusted source, or that could have been tampered with."
+    print(bold + "From the Python 3 manual:" + end)
+    s = (
+        "Only unpickle data you trust. It is possible to construct "
+        "malicious pickle data which will execute arbitrary code during "
+        "unpickling. Never unpickle data that could have come from an "
+        "untrusted source, or that could have been tampered with."
+    )
     lines = textwrap.wrap(s)
-    s = italics+"\n".join(lines)+end
-    print(s)
+    print(textwrap.fill(s))
     print()
-    s = "You can avoid this interactive warning in the future by using the -y flag."
-    lines = textwrap.wrap(s)
-    print('\n'.join(lines))
+    s = (
+        "You can avoid this interactive warning in the future "
+        "by using the -y flag."
+    )
+    print(textwrap.fill(s))
     print()
 
-    verification = ''
+    verification = ""
 
-    while verification not in {'y', 'n'}:
-        verification = input("Load the file {}? (y/n) ".format(filename))
+    while verification not in {"y", "n"}:
+        verification = input(
+            "Load the file {}{}{}? (y/n) ".format(bold, filename, end)
+        )
         verification = verification.lower().strip()
 
-    if verification == 'n':
+    if verification == "n":
         print("Aborting.")
         sys.exit(0)
+
 
 def get_biparts(x):
     """These are just the pairs where a < x-a and x&a=0"""
@@ -70,7 +81,7 @@ def get_candidates(
         return triplet_weights[bipart_rep(a, b)] + stack[a] + stack[b]
 
     print("* Finding initial splits")
-    ### Find the topmost splits
+    # > Find the topmost splits
     # These are the topmost splits
     candidates = [
         {
@@ -102,7 +113,7 @@ def get_candidates(
     # future versions of this code).
     candidates = new_candidates
 
-    ### Burn in
+    # Burn in
     print("* Beginning burn-in")
     while (
         len(candidates) != 0
@@ -180,13 +191,20 @@ def get_candidates(
     # paths uniformly
     n_candidates = len(candidates) + len(finished_candidates)
     if n_candidates < n_trees:
-        print("* Could only find {} trees satisfying the constraint ({} requested)".format(n_candidates, n_trees))
+        print(
+            textwrap.fill(
+                "* Could only find {} trees satisfying the constraint ({} "
+                "requested)".format(n_candidates, n_trees)
+            )
+        )
         chosen_paths = candidates + finished_candidates
     else:
         print("* Picking random subset of tree candidates")
-        chosen_paths = rng.choices(candidates + finished_candidates, k=n_trees,)
+        chosen_paths = rng.choices(
+            candidates + finished_candidates, k=n_trees,
+        )
 
-    ### Fully split-up the remaining candidates
+    # Fully split-up the remaining candidates
 
     # These are all guaranteed to work out, so let's go through them,
     # choosing random splits along the way.
@@ -215,14 +233,14 @@ def get_candidates(
                     if popcount(x) > 2:
                         candidate["active"].append(x)
 
-    ### We're done! Return for outputting.
+    # We're done! Return for outputting.
     return chosen_paths
 
 
 def get_present_species(x, reverse_dictionary):
     """Find the names of all the species in the set with
     bit representation x.
-    
+
     x - bitwise representation of a set of labels
     reverse_dictionary - dictionary sending a set x to bipart (a,b),
     where x, a, b are given as binary numbers and a<b."""
@@ -252,31 +270,38 @@ def _get_nwk(x, reverse_dictionary, biparts):
 
 def get_nwk(x, reverse_dictionary, biparts):
     """Build up a Newick string recursively, given by bipartitions.
-    
-    x - bit representation of the set of species involved (usually 2^n_species-1)
-    reverse_dictionary - list of names s.t. ith set bit corresponds to this name
-    biparts - dictionary sending a set x to bipart (a,b), where x, a, b are given
-    as binary numbers and a<b.
+
+    x - bit representation of the set of species involved (usually
+        2^n_species-1)
+    reverse_dictionary - list of names s.t. ith set bit corresponds to
+                         this name
+    biparts - dictionary sending a set x to bipart (a,b), where x, a, b
+              are given as binary numbers and a<b.
     """
     return _get_nwk(x, reverse_dictionary, biparts) + ";"
 
 
 def get_parser():
     parser = FriendlyParser(
-        description="Takes a pickled (serialized) weights file, and outputs trees with suboptimal scores that are greater than a set minimum. The output is sorted in descending score order, and each tree's score is in commented-out line above the Newick string."
+        description="Takes a pickled (serialized) weights file, and outputs "
+        "trees with suboptimal scores that are greater than a set minimum. "
+        "The output is sorted in descending score order, and each tree's "
+        "score is in commented-out line above the Newick string."
     )
     parser.add_argument(
         "i",
         action="store",
         type=str,
-        help="input pickled weights file (e.g. weights.p), produced by the median_triplet utility with the -b flag",
+        help="input pickled weights file (e.g. weights.p), produced by the "
+        "mediantriplet utility with the -b flag",
     )
     parser.add_argument(
         "o",
         nargs="?",
         action="store",
         type=str,
-        help="output file (warning: any existing file will be overwritten!). If no argument is given, output is written to stdout",
+        help="output file (warning: any existing file will be overwritten!). "
+        "If no argument is given, output is written to stdout",
         default=None,
     )
     parser.add_argument(
@@ -300,7 +325,8 @@ def get_parser():
         "--fraction",
         action="store",
         type=float,
-        help="each tree must have a score that's at least this fraction of the maximal score. Must be between 0 and 1. Defaults to 0.99",
+        help="each tree must have a score that's at least this fraction of "
+        "the maximal score. Must be between 0 and 1. Defaults to 0.99",
         default=0.99,
     )
     parser.add_argument(
@@ -314,14 +340,18 @@ def get_parser():
         "-b",
         "--burnin",
         type=int,
-        help="find this many viable candidates (i.e. find finer splits) before randomly choosing a subsample. A higher value gives a more uniform distribution, but takes more time and memory. Defaults to 4x the number of output trees",
+        help="find this many viable candidates (i.e. find finer splits) "
+        "before randomly choosing a subsample. A higher value gives a more "
+        "uniform distribution, but takes more time and memory. Defaults to "
+        "4x the number of requested trees",
         default=None,
     )
     parser.add_argument(
         "-s",
         "--seed",
         type=int,
-        help="seed for the random number generator used in taking a random walk along the space of splits. Defaults to 0",
+        help="seed for the random number generator used in taking a random "
+        "walk along the space of splits. Defaults to 0",
         default=0,
     )
     parser.add_argument(
@@ -387,11 +417,11 @@ def main():
             print("* Loading pickle")
             try:
                 unpickled = pickle.load(f)
-            except:
+            except (pickle.UnpicklingError, EOFError) as e:
                 print(e)
                 print("Can't unpickle (wrong file?). Aborting.")
                 return 1
-    except:
+    except OSError:
         print(
             "Can't open input file {} for reading. Aborting.".format(
                 cli_flags.i
@@ -404,7 +434,7 @@ def main():
         if unpickled["abigsecret"] != "ogurets":
             print("This does not seem to be a valid file. Aborting.")
             return 1
-    except:
+    except Error as e:
         print("This does not seem to be a valid file. Aborting.")
         return 1
 
@@ -428,13 +458,14 @@ def main():
     # was not set then it's equal to -1 and is overwritten by the fraction. */
     min_score = int(max(cli_flags.fraction * max_score, cli_flags.minscore))
     print(
-        "* Setting minimum viable tree score to {} (max of -m and -f flags)".format(
-            min_score
+        textwrap.fill(
+            "* Setting minimum viable tree score to {} "
+            "(max of -m and -f flags)".format(min_score)
         )
     )
 
     print()
-    print(underline+"Finding trees"+end)
+    print(underline + "Finding trees" + end)
     # Get the solution
     solution = get_candidates(
         triplet_weights,
@@ -449,28 +480,40 @@ def main():
     print("* Sorting by score")
 
     print()
-    print(bold+underline+"Done!"+end+end)
-    success_str=bold+"Found {} trees satisfying the given constraints. 🪆".format(len(solution))+end
+    print(bold + underline + "Done!" + end + end)
+    success_str = (
+        bold
+        + "Found {} trees satisfying the given constraints. 🪆".format(
+            len(solution)
+        )
+        + end
+    )
     print(success_str)
-    solution.sort(key=lambda x:x['curscore'], reverse=True)
+    solution.sort(key=lambda x: x["curscore"], reverse=True)
     # Record lines to output to screen, file, or both
     print("* Translating to Newick format")
-    universe = 2**n_species - 1
+    universe = 2 ** n_species - 1
     lines = []
     for candidate in solution:
-        lines.append("#{}".format(candidate['curscore']))
-        lines.append(get_nwk(universe, reverse_dictionary, candidate['biparts']))
+        lines.append("#{}".format(candidate["curscore"]))
+        lines.append(
+            get_nwk(universe, reverse_dictionary, candidate["biparts"])
+        )
     if cli_flags.o is not None:
         try:
             with open(cli_flags.o, "w") as f:
-                f.writelines([s + '\n' for s in lines])
+                f.writelines([s + "\n" for s in lines])
             print(
                 "* {}Wrote all found trees to {}{}{}.".format(
                     bold, italics, cli_flags.o, end, end
                 )
             )
         except IOError:
-            print("Could not write to {}. Outputting to stdout instead.".format(cli_flags.o))
+            print(
+                "Could not write to {}. Outputting to stdout instead.".format(
+                    cli_flags.o
+                )
+            )
             cli_flags.print = True
 
     if cli_flags.print:

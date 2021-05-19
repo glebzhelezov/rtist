@@ -16,6 +16,7 @@ underline = "\033[4m"
 italics = "\033[3m"
 end = "\033[0m"
 
+
 # Trick by Steven Berthard
 # https://groups.google.com/g/argparse-users/c/LazV_tEQvQw
 # https://stackoverflow.com/questions/4042452/display-help-message-with-python-argparse-when-script-is-called-without-any-argu
@@ -25,9 +26,11 @@ class FriendlyParser(argparse.ArgumentParser):
         self.print_help()
         sys.exit(2)
 
+
 def get_parser():
     parser = FriendlyParser(
-        description="Reads in a file of Newick strings, and outputs a file with all the median triplet trees."
+        description="Reads in a file of Newick strings, and outputs a file "
+        "with all the median triplet trees."
     )
     parser.add_argument(
         "i",
@@ -40,11 +43,15 @@ def get_parser():
         nargs="?",
         action="store",
         type=str,
-        help="output file (warning: any existing file will be overwritten!). Defaults to out_<input file>",
+        help="output file (warning: any existing file will be overwritten!)."
+        " Defaults to out_<input file>",
         default=None,
     )
     parser.add_argument(
-        "-v", "--version", action="version", version=median_triplet_version.__version__,
+        "-v",
+        "--version",
+        action="version",
+        version=median_triplet_version.__version__,
     )
     parser.add_argument(
         "-t",
@@ -52,12 +59,15 @@ def get_parser():
         action="store",
         type=int,
         default=-1,
-        help="maximum number of concurrent threads (defaults to number of CPUs, or 1 if undetermined). Must be a positive integer or -1 for the default guess",
+        help="maximum number of concurrent threads (defaults to number of "
+             "CPUs, or 1 if undetermined). Must be a positive integer or -1 "
+             "for the default guess",
     )
     parser.add_argument(
         "--novalidate",
         action="store_true",
-        help="don't perform line-by-line sanity check for each input Newick string (for a small speedup)",
+        help="don't perform line-by-line sanity check for each input Newick"
+        + " string (for a small speedup)",
         default=False,
     )
     parser.add_argument(
@@ -79,10 +89,13 @@ def get_parser():
         "--binary",
         action="store",
         type=str,
-        help="save the weights array to a binary file. This file can be used to find additional trees. Traditionally this file has the extension .p",
+        help="save the weights array to a binary file. This file can be "
+             "used to find additional trees. Traditionally this file has "
+             "the extension .p",
     )
 
     return parser
+
 
 def main():
     tic = time()
@@ -100,7 +113,8 @@ def main():
 
     if nosave and not printflag:
         print(
-            "The flag --nosave cannot be used without --print, otherwise the output goes nowhere. Aborting."
+            "The flag --nosave cannot be used without --print, otherwise "
+            "the output goes nowhere. Aborting."
         )
         return 1
 
@@ -137,7 +151,9 @@ def main():
             print("* Stripping Newick strings.")
             nwks = [line.strip() for line in f]
     except IOError:
-        print("Can't open input file {} for reading. Aborting.".format(in_file))
+        print(
+            "Can't open input file {} for reading. Aborting.".format(in_file)
+        )
         return 1
 
     if not novalidate:
@@ -148,18 +164,17 @@ def main():
                 continue
             # Need to put in a stricter validator here
             if string[-1] != ";":
-                print("Line {} doesn't end of a semicolon! Aborting!".format(i + 1))
+                print(f"Line {i+1} doesn't end of a semicolon! Aborting!")
                 return 1
             if string.count("(") != string.count(")"):
                 print(
-                    "Line {} doesn't have an equal number of left and right brackets! Aborting!".format(
-                        i + 1
-                    )
+                    f"Line {i+1} doesn't have an equal number of left and "
+                    "right brackets! Aborting!"
                 )
                 return 1
 
     # Get rid of comments
-    nwks[:] = [s for s in nwks if s[0] != '#']
+    nwks[:] = [s for s in nwks if s[0] != "#"]
 
     print("")
     print(underline + "Finding median tree. This might take a while!" + end)
@@ -184,14 +199,20 @@ def main():
                 )
             )
         except IOError:
-            print("Can't write to {}. Outputting to stdout instead.".format(outfile))
+            print(
+                "Can't write to {}. Outputting to stdout instead.".format(
+                    outfile
+                )
+            )
             # If can't write to file, output to screen as a last resort
             printflag = True
 
     toc = time()
     dt = timedelta(seconds=toc - tic)
 
-    print("🤖💬 Beep boop, finished in {:.2f} seconds.".format(dt.total_seconds()))
+    print(
+        "🤖💬 Beep boop, finished in {:.2f} seconds.".format(dt.total_seconds())
+    )
 
     if printflag:
         print("")
@@ -224,7 +245,9 @@ def main():
                     best_biparts,
                 ]
 
-                pickle.dump({l: t for (l, t) in zip(labels, to_pickle)}, f, protocol=4)
+                pickle.dump(
+                    {l: t for (l, t) in zip(labels, to_pickle)}, f, protocol=4
+                )
 
                 # for item in to_pickle:
                 #    pickle.dump(item, f, protocol=4)
@@ -234,11 +257,8 @@ def main():
                 )
             )
         except IOError:
-            print(
-                "Can't write to {}. Aborting serializing the processed data.".format(
-                    picklename
-                )
-            )
+            print(f"Can't write to {picklename}. Aborting serializing the "
+                  "processed data.")
 
     return 0
 
