@@ -194,14 +194,14 @@ def main():
             with open(out_file, "w") as f:
                 f.writelines([s + "\n" for s in median_nwks])
             print(
-                "* {}Wrote all median triplet trees to {}{}{}.".format(
+                "* {}Wrote all median triplet trees to {}{}{}{}.".format(
                     bold, italics, out_file, end, end
                 )
             )
         except IOError:
             print(
                 "Can't write to {}. Outputting to stdout instead.".format(
-                    outfile
+                    out_file
                 )
             )
             # If can't write to file, output to screen as a last resort
@@ -252,7 +252,7 @@ def main():
                 # for item in to_pickle:
                 #    pickle.dump(item, f, protocol=4)
             print(
-                "* {}Pickled weights to {}{}{}. 🥒🏋️".format(
+                "* {}Pickled weights to {}{}{}{}. 🥒🏋️".format(
                     bold, italics, picklename, end, end
                 )
             )

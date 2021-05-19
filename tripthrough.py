@@ -33,7 +33,6 @@ def pickle_warning(filename):
         "unpickling. Never unpickle data that could have come from an "
         "untrusted source, or that could have been tampered with."
     )
-    lines = textwrap.wrap(s)
     print(textwrap.fill(s))
     print()
     s = (
@@ -430,11 +429,13 @@ def main():
         return 1
 
     print("* Verifying")
+    # This is just to lower the probability of a nonsense file--not actually
+    # for any kind of security, etc.
     try:
         if unpickled["abigsecret"] != "ogurets":
             print("This does not seem to be a valid file. Aborting.")
             return 1
-    except Error as e:
+    except Exception:
         print("This does not seem to be a valid file. Aborting.")
         return 1
 
@@ -504,7 +505,7 @@ def main():
             with open(cli_flags.o, "w") as f:
                 f.writelines([s + "\n" for s in lines])
             print(
-                "* {}Wrote all found trees to {}{}{}.".format(
+                "* {}Wrote all found trees to {}{}{}{}.".format(
                     bold, italics, cli_flags.o, end, end
                 )
             )

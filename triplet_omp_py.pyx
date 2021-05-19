@@ -5,13 +5,18 @@ IF HAVE_CYSIGNALS:
     from cysignals.signals cimport sig_on, sig_off
 ELSE:
     # for non-POSIX systems
-    noop = lambda: None
+    def noop():
+        return None
+    # noop = lambda: None
     sig_on = noop
     sig_off = noop
+
 
 cdef extern from "weights_omp.h":
     int combinations_2(int n)
     int n_common_triplets(int a, int b, int c, int d)
+
+
 cdef extern from "weights_omp.h" nogil:
     void fill_compressed_weight_representation(
         int *subsets,
@@ -25,11 +30,12 @@ cdef extern from "weights_omp.h" nogil:
         int *weights,
         int *two2three,
         int n_threads,
-        )
-#    void get_optimal_bipart(int full_set, int *left, int *right, int *weights, 
-#            int *two2three)
+    )
+
+
 cdef extern from "lookup_table.h":
     void fill_two2three(int *two2three, int n)
+
 
 def zero_array(n, type_code='i'):
     """Creates an n-long zeroed out Python array, default type int."""
@@ -44,6 +50,7 @@ def py_combinations_2(n):
     """Return n choose 2."""
     return combinations_2(n)
 
+
 def create_two2three(n):
     """Create an array whose ith element is the number i, with 3^n instead
     of 2^n in the binary expansion of."""
@@ -56,10 +63,9 @@ def create_two2three(n):
 
     return ar
 
-def py_compressed_weight_rep(
-        subsets, start_i, end_i, biparts_a, biparts_b, bipart_weights,
-        n_species, n_threads=1
-        ):
+
+def py_compressed_weight_rep(subsets, start_i, end_i, biparts_a, biparts_b,
+                             bipart_weights, n_species, n_threads=1):
     """Computes the compressed representation of the bipartition weights."""
     # Copy the lists to arrays, to make them usable in C code
     ar_subsets = array.array('i', subsets)
@@ -87,26 +93,26 @@ def py_compressed_weight_rep(
     if n_threads > 1:
         threads_str += 's'
 
-    print("Starting parallel comptuation with a max of {} {}.".
-            format(n_threads, threads_str)
-    )
+    print("Starting parallel comptuation with a max of "
+          "{} {}.".format(n_threads, threads_str))
     sig_on()
     fill_compressed_weight_representation(
-            &subsets_memview[0],
-            &start_memview[0],
-            &end_memview[0],
-            &biparts_a_memview[0],
-            &biparts_b_memview[0],
-            &bipart_weights_memview[0],
-            n_subsets,
-            n_species,
-            &weights_memview[0],
-            &two2three_memview[0],
-            n_threads,
-            )
+        &subsets_memview[0],
+        &start_memview[0],
+        &end_memview[0],
+        &biparts_a_memview[0],
+        &biparts_b_memview[0],
+        &bipart_weights_memview[0],
+        n_subsets,
+        n_species,
+        &weights_memview[0],
+        &two2three_memview[0],
+        n_threads,
+    )
     sig_off()
 
     return weights
+
 
 def py_n_common_triplets(int a, int b, int c, int d):
     return n_common_triplets(a, b, c, d)
