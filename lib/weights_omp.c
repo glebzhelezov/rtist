@@ -4,8 +4,8 @@
 #include <math.h>
 #include "weights_omp.h"
 #include "lookup_table.h"
-#include "progressbar.h"
-#include "statusbar.h"
+/*#include "progressbar.h"
+#include "statusbar.h"*/
 
 /*
    int main() {
@@ -135,7 +135,7 @@ void fill_compressed_weight_representation(
         int n_threads) {
     /* Iterate over all the (sub)bi-partitions. */
     int loop_progress = 0;
-    progressbar *progbar = progressbar_new("Progress", n_subsets);
+    /*progressbar *progbar = progressbar_new("Progress", n_subsets);*/
 #pragma omp parallel num_threads(n_threads)
     {
         /* Get actual number of threads, and this thread's ID */
@@ -219,13 +219,13 @@ void fill_compressed_weight_representation(
                 counter_private = 0;
                 /* Only update the progress bar by the master thread */
                 if (thread_id_private == 0) {
-                    progressbar_update(progbar, loop_progress);
+                    /*progressbar_update(progbar, loop_progress);*/
                 }
             }
         }
     }
-    progressbar_update(progbar, n_subsets);
-    progressbar_finish(progbar);
+    /*progressbar_update(progbar, n_subsets);
+    progressbar_finish(progbar);*/
 
 }
 

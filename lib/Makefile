@@ -3,7 +3,8 @@ PROGRESS_DIR = progressbar
 
 default: libctriplet.a
 
-libctriplet.a: lookup_table.o weights_omp.o $(PROGRESS_DIR)/statusbar.o $(PROGRESS_DIR)/progressbar.o
+#libctriplet.a: lookup_table.o weights_omp.o $(PROGRESS_DIR)/statusbar.o $(PROGRESS_DIR)/progressbar.o
+libctriplet.a: lookup_table.o weights_omp.o
 	ar rcs $@ $^
 
 lookup_table.o: lookup_table.c lookup_table.h
