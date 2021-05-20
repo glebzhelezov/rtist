@@ -1,5 +1,5 @@
-from bitsnbobs import popcount, pysnoob
-from scipycomb import _comb_int as comb
+from trippy.bitsnbobs import popcount, pysnoob
+from trippy.scipycomb import _comb_int as comb
 
 # from scipy.special import comb
 
