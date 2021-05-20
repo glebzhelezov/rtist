@@ -219,11 +219,19 @@ void fill_compressed_weight_representation(
                 counter_private = 0;
                 /* Only update the progress bar by the master thread */
                 if (thread_id_private == 0) {
+                    /* Progress bar temporarily disabled */
+                    fprintf(stderr, "\r%d/%d complete (%.2f%%)", loop_progress, n_subsets,
+                            (100.0*loop_progress)/n_subsets);
+                    fflush(stderr);
                     /*progressbar_update(progbar, loop_progress);*/
                 }
             }
         }
     }
+    fprintf(stderr, "\r");
+    fflush(stderr);
+    printf("%d/%d complete (%.2f\%)\n", n_subsets, n_subsets, 100.0);
+    fflush(stdout);
     /*progressbar_update(progbar, n_subsets);
     progressbar_finish(progbar);*/
 
