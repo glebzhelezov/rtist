@@ -3,6 +3,12 @@ from setuptools import setup, find_packages
 from distutils.extension import Extension
 from Cython.Build import cythonize
 import cysignals
+# setup.py is only called via the Makefile, which updates this...
+try:
+    from trippy.median_triplet_version import __version__ as version
+except:
+    import datetime
+    version = datetime.datetime.now().timestamp()
 
 compile_time_env = dict(HAVE_CYSIGNALS=False)
 # detect `cysignals`
@@ -34,6 +40,7 @@ scipy_comb = Extension(
 
 setup(
     name="trippy",
+    version=version,
     package_dir={"": "src"},
     packages=find_packages(where="src"),
     ext_modules=cythonize(

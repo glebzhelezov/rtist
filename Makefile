@@ -1,11 +1,13 @@
 LIB_DIR = lib
 VERSION := $(shell git describe --tags)
 
-default: binary
+default: trippy
 
 binary: trippy
 	pyinstaller -F --hidden-import array --hidden-import cysignals bin/mediantriplet
 	pyinstaller -F --hidden-import array bin/tripthrough
+	rm mediantriplet.spec
+	rm tripthrough.spec
 
 
 trippy: setup.py src/trippy/*.pyx libctriplet.a tags
