@@ -3,34 +3,29 @@ VERSION := $(shell git describe --tags)
 
 default: binary
 
-binary: comb2
-	pyinstaller -F --hidden-import array --hidden-import cysignals mediantriplet.py
-	pyinstaller -F --hidden-import array tripthrough.py
+binary: trippy
+	pyinstaller -F --hidden-import array --hidden-import cysignals bin/mediantriplet
+	pyinstaller -F --hidden-import array bin/tripthrough
 
 
-comb2: setup.py triplet_omp_py.pyx libctriplet.a tags
-	rm -fv *.c
-	python setup.py build_ext --inplace
-#	python setup.py develop
+trippy: setup.py src/trippy/*.pyx libctriplet.a tags
+	rm -fv src/trippy/*.c
+	# python setup.py build_ext --inplace
+	# python setup.py develop
+	python setup.py develop
 
 libctriplet.a:
 	make -C $(LIB_DIR) libctriplet.a
 
 tags:
-	echo "__version__ = \"$(VERSION)\"" > median_triplet_version.py
+	echo "__version__ = \"$(VERSION)\"" > src/trippy/median_triplet_version.py
 
 cleanall: clean libcleanall
 	rm -rfv dist
-	rm -fv *.so
 
 clean: libcleanall
-	rm -fv comb2.c
-	rm -rfv build
-	rm -fv bitsnbobs.c
-	rm -fv scipy_comb.c
-	rm -fv triplet_omp_py.c
-	rm -rfv build
-	rm -fv median_triplet.spec
+	python setup.py clean --all
+	rm -fv src/trippy/*.c
 
 libclean:
 	make -C $(LIB_DIR) clean

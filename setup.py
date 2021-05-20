@@ -1,5 +1,5 @@
-# from distutils.core import setup
-from setuptools import setup
+#from distutils.core import setup
+from setuptools import setup, find_packages
 from distutils.extension import Extension
 from Cython.Build import cythonize
 import cysignals
@@ -11,8 +11,8 @@ if cysignals is not None:
 
 comb2_extension = Extension(
     # name="comb2",
-    name="triplet_omp",
-    sources=["triplet_omp_py.pyx"],
+    name="trippy.triplet_omp",
+    sources=["src/trippy/triplet_omp_py.pyx"],
     libraries=["ctriplet", "ncurses"],
     library_dirs=["lib"],
     include_dirs=["lib"],
@@ -21,22 +21,25 @@ comb2_extension = Extension(
 )
 
 bitsnbobs = Extension(
-    name="bitsnbobs",
-    sources=["bitsnbobs.pyx"],
+    name="trippy.bitsnbobs",
+    sources=["src/trippy/bitsnbobs.pyx"],
     extra_compile_args=["-Ofast", "-march=native"],
 )
 
-scipycomb = Extension(
-    name="scipycomb",
-    sources=["scipy_comb.pyx"],
+scipy_comb = Extension(
+    name="trippy.scipycomb",
+    sources=["src/trippy/scipy_comb.pyx"],
     extra_compile_args=["-Ofast", "-march=native"],
 )
 
 setup(
-    name="comb2",
+    name="trippy",
+    package_dir={"": "src"},
+    packages=find_packages(where="src"),
     ext_modules=cythonize(
-        [comb2_extension, bitsnbobs, scipycomb,],
+        [comb2_extension, bitsnbobs, scipy_comb],
         language_level=3,
         compile_time_env=compile_time_env,
     ),
+    scripts=['bin/mediantriplet','bin/tripthrough'],
 )

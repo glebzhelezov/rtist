@@ -2,12 +2,12 @@
 import argparse
 import sys
 import pickle
-import median_triplet_version
 from time import time
 from datetime import timedelta
 from os import cpu_count
 from os.path import basename
-from median_tree_reconstruction import median_triplet_trees
+from trippy.median_tree_reconstruction import median_triplet_trees
+import trippy.median_triplet_version
 
 
 # Some fun colors. Should be refactored. Or removed. :-)
@@ -51,7 +51,7 @@ def get_parser():
         "-v",
         "--version",
         action="version",
-        version=median_triplet_version.__version__,
+        version=trippy.median_triplet_version.__version__,
     )
     parser.add_argument(
         "-t",
@@ -236,7 +236,7 @@ def main():
                 ]
                 to_pickle = [
                     "ogurets",
-                    median_triplet_version.__version__,
+                    trippy.median_triplet_version.__version__,
                     nwks,
                     median_nwks,
                     reverse_dictionary,

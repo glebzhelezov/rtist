@@ -1,6 +1,7 @@
 import re
-import triplet_omp
-import snoob
+import trippy.triplet_omp as triplet_omp
+import trippy.scipycomb as scipycomb
+import trippy.snoob as snoob
 from multiprocessing import Pool
 from collections import deque, Counter
 from itertools import product
@@ -8,7 +9,8 @@ from time import perf_counter
 from functools import partial
 from random import Random
 from textwrap import fill
-from bitsnbobs import popcount, get_binary_subsets, init_bipart_rep_function
+from trippy.bitsnbobs import popcount, get_binary_subsets
+from trippy.bitsnbobs import init_bipart_rep_function
 
 # I know I shouldn't do this :(
 # Only use multiprocessing for basic parsing if the list of nwks is quite long
