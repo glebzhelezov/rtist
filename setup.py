@@ -19,7 +19,7 @@ comb2_extension = Extension(
     # name="comb2",
     name="trippy.triplet_omp",
     sources=["src/trippy/triplet_omp_py.pyx"],
-    libraries=["ctriplet", "ncurses"],
+    libraries=["ncurses", "ctriplet"],
     library_dirs=["lib"],
     include_dirs=["lib"],
     extra_compile_args=["-Ofast", "-fopenmp", "-march=native"],
@@ -35,11 +35,14 @@ bitsnbobs = Extension(
 scipy_comb = Extension(
     name="trippy.scipycomb",
     sources=["src/trippy/scipy_comb.pyx"],
-    extra_compile_args=["-Ofast", "-march=native"],
+    extra_compile_args=["-lm", "-Ofast", "-march=native"],
 )
 
 setup(
     name="trippy",
+    author="Gleb Zhelezov",
+    author_email="gzhelezo@unm.edu",
+    description="A package for finding the exact median triplet tree",
     version=version,
     package_dir={"": "src"},
     packages=find_packages(where="src"),
@@ -48,5 +51,5 @@ setup(
         language_level=3,
         compile_time_env=compile_time_env,
     ),
-    scripts=['bin/mediantriplet','bin/tripthrough'],
+    scripts=['scripts/mediantriplet','scripts/tripthrough'],
 )

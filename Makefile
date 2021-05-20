@@ -4,8 +4,8 @@ VERSION := $(shell git describe --tags)
 default: trippy
 
 binary: trippy
-	pyinstaller -F --hidden-import array --hidden-import cysignals bin/mediantriplet
-	pyinstaller -F --hidden-import array bin/tripthrough
+	pyinstaller -F --hidden-import array --hidden-import cysignals scripts/mediantriplet
+	pyinstaller -F --hidden-import array scripts/tripthrough
 	rm mediantriplet.spec
 	rm tripthrough.spec
 
