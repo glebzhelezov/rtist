@@ -326,7 +326,8 @@ def get_parser():
         action="store",
         type=float,
         help="each tree must have a score that's at least this fraction of "
-        "the maximal score. Must be between 0 and 1. Defaults to 0.99",
+        "the maximal score. Must be greater than 0 and less than or equal "
+        "to 1. Defaults to 0.99",
         default=0.99,
     )
     parser.add_argument(
@@ -389,7 +390,7 @@ def main():
             return 1
         print("Min score   :", cli_flags.minscore)
     if cli_flags.fraction != 1:
-        if not 0 < cli_flags.fraction < 1:
+        if not 0 < cli_flags.fraction <= 1:
             print("Invalid minimum fraction. Aborting.")
             return 1
         print("Min fraction:", cli_flags.fraction)
