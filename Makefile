@@ -34,3 +34,6 @@ libclean:
 
 libcleanall:
 	make -C $(LIB_DIR) cleanall
+
+uninstall:
+	pip uninstall -y trippy
