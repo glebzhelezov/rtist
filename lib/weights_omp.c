@@ -141,6 +141,10 @@ void fill_compressed_weight_representation(
         /* Get actual number of threads, and this thread's ID */
         int n_threads_assigned = omp_get_num_threads();
         int thread_id_private = omp_get_thread_num();
+        /* Print out number of threads */
+        if (thread_id_private == 0) {
+            printf("Using %d threads.\n", n_threads_assigned);
+        }
         /* Calculate the progress this thread is making, to eventually add
          * to the progress bar. */
         int counter_private = 0;
