@@ -70,6 +70,13 @@ def get_parser():
         + " string (for a small speedup)",
         default=False,
     )
+    # parser.add_argument(
+    #     "-w",
+    #     "--weights",
+    #     action="store_true",
+    #     help="compute weights array but don't compute median tree. Useful for combining different weights arrays later on",
+    #     default=False,
+    # )
     parser.add_argument(
         "-n",
         "--nosave",
@@ -108,6 +115,7 @@ def main():
     n_threads = result.threads
     novalidate = result.novalidate
     nosave = result.nosave
+    #onlyweights = result.weights
     printflag = result.print
     picklename = result.binary
 
