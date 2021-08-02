@@ -5,7 +5,7 @@ from Cython.Build import cythonize
 import cysignals
 # setup.py is only called via the Makefile, which updates this...
 try:
-    from trippy.median_triplet_version import __version__ as version
+    from mtrip.median_triplet_version import __version__ as version
 except:
     import datetime
     version = datetime.datetime.now().timestamp()
@@ -17,8 +17,8 @@ if cysignals is not None:
 
 comb2_extension = Extension(
     # name="comb2",
-    name="trippy.triplet_omp",
-    sources=["src/trippy/triplet_omp_py.pyx"],
+    name="mtrip.triplet_omp",
+    sources=["src/mtrip/triplet_omp_py.pyx"],
     libraries=["ncurses", "ctriplet"],
     library_dirs=["lib"],
     include_dirs=["lib"],
@@ -27,19 +27,19 @@ comb2_extension = Extension(
 )
 
 bitsnbobs = Extension(
-    name="trippy.bitsnbobs",
-    sources=["src/trippy/bitsnbobs.pyx"],
+    name="mtrip.bitsnbobs",
+    sources=["src/mtrip/bitsnbobs.pyx"],
     extra_compile_args=["-Ofast", "-march=native"],
 )
 
 scipy_comb = Extension(
-    name="trippy.scipycomb",
-    sources=["src/trippy/scipy_comb.pyx"],
+    name="mtrip.scipycomb",
+    sources=["src/mtrip/scipy_comb.pyx"],
     extra_compile_args=["-lm", "-Ofast", "-march=native"],
 )
 
 setup(
-    name="trippy",
+    name="mtrip",
     author="Gleb Zhelezov",
     author_email="gzhelezo@unm.edu",
     description="A package for finding the exact median triplet tree",

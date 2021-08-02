@@ -5,9 +5,9 @@ import pickle
 import random
 import itertools
 import textwrap
-import trippy.median_triplet_version
-from trippy.bitsnbobs import init_bipart_rep_function, get_binary_subsets
-from trippy.bitsnbobs import popcount
+import mtrip.median_triplet_version
+from mtrip.bitsnbobs import init_bipart_rep_function, get_binary_subsets
+from mtrip.bitsnbobs import popcount
 
 # Some fun colors. Should be refactored. Or removed. :-)
 bold = "\033[1m"
@@ -366,7 +366,7 @@ def get_parser():
         "-v",
         "--version",
         action="version",
-        version=trippy.median_triplet_version.__version__,
+        version=mtrip.median_triplet_version.__version__,
     )
 
     return parser
