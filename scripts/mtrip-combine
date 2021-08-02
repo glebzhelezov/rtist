@@ -8,6 +8,9 @@ from mtrip import median_tree_reconstruction as mtr
 from mtrip import median_triplet_version
 
 def main():
+    print("This utility is for combining weight pickles produced by mtrip.")
+    print("Usage:\t$ mtrip-combine in_pickle_1.p ... in_pickle_n.p")
+    print("The output filename will be printed out at the end of the process.")
     if len(sys.argv) < 2:
         print("Not enough arguments! Exiting.")
         return 1
