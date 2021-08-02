@@ -4,10 +4,12 @@ VERSION := $(shell git describe --tags)
 default: mtrip
 
 binary: mtrip
-	pyinstaller -F --hidden-import array --hidden-import cysignals scripts/mediantriplet
-	pyinstaller -F --hidden-import array scripts/tripthrough
-	rm mediantriplet.spec
-	rm tripthrough.spec
+	pyinstaller -F --hidden-import array --hidden-import cysignals scripts/mtrip
+	pyinstaller -F --hidden-import array --hidden-import cysignals scripts/mtrip-suboptimal
+	pyinstaller -F --hidden-import array --hidden-import cysignals scripts/mtrip-combine
+	rm mtrip.spec
+	rm mtrip-combine.spec
+	rm mtrip-suboptimal.spec
 
 
 mtrip: setup.py src/mtrip/*.pyx libctriplet.a tags

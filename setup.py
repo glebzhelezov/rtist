@@ -51,5 +51,5 @@ setup(
         language_level=3,
         compile_time_env=compile_time_env,
     ),
-    scripts=['scripts/mediantriplet','scripts/tripthrough'],
+    scripts=['scripts/mtrip','scripts/mtrip-combine', 'scripts/mtrip-suboptimal'],
 )
