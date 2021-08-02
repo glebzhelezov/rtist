@@ -72,6 +72,6 @@ notebooks/
 .ipynb_checkpoints/
 *.swp
 *.spec
-src/trippy.egg-info/
+src/mtrip.egg-info/
 *.swo
 .condaauto
