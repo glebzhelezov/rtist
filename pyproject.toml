@@ -1,15 +1,23 @@
 [build-system]
-requires = ["setuptools>=42", "wheel", "Cython>=3.0.0", "cysignals"]
+requires = ["setuptools>=42", "wheel", "Cython>=3.0.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "mtrip"
-description = "A package for finding the exact median triplet tree"
+dynamic = ["version"]
 readme = "README.md"
 requires-python = ">=3.6"
-license = {text = "MIT"}
-dynamic = ["version"]
+license = {text = "GPLv3"}
+authors = [
+    {name = "Gleb Zhelezov", email = "gzhelezo@unm.edu"}
+]
+description = "A package for finding the exact median triplet tree"
 dependencies = [
     "Cython>=3.0.0",
-    "cysignals",
 ]
+
+[project.optional-dependencies]
+signals = ["cysignals"]
+
+[tool.setuptools.dynamic]
+version = {attr = "mtrip.__version__"}

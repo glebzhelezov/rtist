@@ -5,14 +5,21 @@ from Cython.Build import cythonize
 import platform
 import subprocess
 import os
+import re
 
-# setup.py is only called via the Makefile, which updates this...
-try:
-    from mtrip.median_triplet_version import __version__ as version
-except:
+# Get version from __init__.py
+def get_version():
+    init_path = os.path.join('src', 'mtrip', '__init__.py')
+    if os.path.exists(init_path):
+        with open(init_path, 'r') as f:
+            version_match = re.search(r"__version__\s*=\s*['\"]([^'\"]*)['\"]", f.read())
+            if version_match:
+                return version_match.group(1)
+    # Fallback if version not found
     import datetime
+    return datetime.datetime.now().timestamp()
 
-    version = "0.0"#datetime.datetime.now().timestamp()
+version = get_version()
 
 compile_time_env = dict(HAVE_CYSIGNALS=False)
 # check if cysignals is available as an optional dependency
@@ -57,16 +64,15 @@ if is_macos:
         library_dirs.append(f"{brew_prefix}/lib")
     else:
         # ...or not, if not available
-        print("Not using OpenMP from Homebrew.")
-        omp_compile_flags = ["-Xpreprocessor", "-fopenmp"]
-        omp_link_flags = ["-lomp"]
+        print("Not using OpenMP from Homebrew. OpenMP will be disabled.")
+        omp_compile_flags = []
+        omp_link_flags = []
 
     extra_compile_args = opt_flags + omp_compile_flags
     extra_link_args = omp_link_flags
 
 
 comb2_extension = Extension(
-    # name="comb2",
     name="mtrip.triplet_omp",
     sources=["src/mtrip/triplet_omp_py.pyx"],
     libraries=["ncurses", "ctriplet"],
@@ -80,8 +86,10 @@ comb2_extension = Extension(
 basic_compile_args = []
 if is_macos and is_arm64:
     basic_compile_args = ["-Ofast", "-mcpu=apple-m1"]
+elif is_macos:
+    basic_compile_args = ["-Ofast", "-march=native"]
 else:
-    basic_compile_args = ["-Ofast", "-match=native"]
+    basic_compile_args = ["-Ofast", "-march=native"]
 
 bitsnbobs = Extension(
     name="mtrip.bitsnbobs",
@@ -109,7 +117,5 @@ setup(
         compile_time_env=compile_time_env,
     ),
     scripts=["scripts/mtrip", "scripts/mtrip-combine", "scripts/mtrip-suboptimal"],
-    install_requires=["cython"],
-    setup_requires=["cython"],
-    extras_require={"signals": ["cysignals"]}
+    # dependencies are in pyproject.toml
 )
