@@ -6,20 +6,19 @@ import platform
 import subprocess
 import os
 import re
+from setuptools.command.build_py import build_py
+import subprocess
 
-# Get version from __init__.py
-def get_version():
-    init_path = os.path.join('src', 'mtrip', '__init__.py')
-    if os.path.exists(init_path):
-        with open(init_path, 'r') as f:
-            version_match = re.search(r"__version__\s*=\s*['\"]([^'\"]*)['\"]", f.read())
-            if version_match:
-                return version_match.group(1)
-    # Fallback if version not found
-    import datetime
-    return datetime.datetime.now().timestamp()
-
-version = get_version()
+class CustomBuildCommand(build_py):
+    """Run the makefile to compile the C code."""
+    def run(self):
+        try:
+            subprocess.check_call(['make', '-C', 'lib'])
+        except subprocess.CalledProcessError as e:
+            print(f"Error running make: {e}")
+            raise
+        # continue with the regular build
+        build_py.run(self)
 
 compile_time_env = dict(HAVE_CYSIGNALS=False)
 # check if cysignals is available as an optional dependency
@@ -108,7 +107,7 @@ setup(
     author="Gleb Zhelezov",
     author_email="gzhelezo@unm.edu",
     description="A package for finding the exact median triplet tree",
-    version=version,
+    version="0.0",
     package_dir={"": "src"},
     packages=find_packages(where="src"),
     ext_modules=cythonize(
@@ -117,5 +116,8 @@ setup(
         compile_time_env=compile_time_env,
     ),
     scripts=["scripts/mtrip", "scripts/mtrip-combine", "scripts/mtrip-suboptimal"],
+    cmdclass={
+        'build_py': CustomBuildCommand,
+    }
     # dependencies are in pyproject.toml
 )
