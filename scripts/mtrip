@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 import argparse
-import sys
 import pickle
-from time import time
+import sys
 from datetime import timedelta
 from os import cpu_count
 from os.path import basename
-from mtrip.median_tree_reconstruction import median_triplet_trees
-import mtrip.median_triplet_version
+from time import time
 
+import mtrip.median_triplet_version
+from mtrip.median_tree_reconstruction import median_triplet_trees
 
 # Some fun colors. Should be refactored. Or removed. :-)
 bold = "\033[1m"

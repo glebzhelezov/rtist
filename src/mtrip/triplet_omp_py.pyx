@@ -1,8 +1,9 @@
 from cpython cimport array
+
 import array
 
 IF HAVE_CYSIGNALS:
-    from cysignals.signals cimport sig_on, sig_off
+    from cysignals.signals cimport sig_off, sig_on
 ELSE:
     # for non-POSIX systems
     def noop():

@@ -1,13 +1,14 @@
 #!/usr/bin/env python
 import argparse
-import sys
+import itertools
 import pickle
 import random
-import itertools
+import sys
 import textwrap
+
 import mtrip.median_triplet_version
-from mtrip.bitsnbobs import init_bipart_rep_function, get_binary_subsets
-from mtrip.bitsnbobs import popcount
+from mtrip.bitsnbobs import (get_binary_subsets, init_bipart_rep_function,
+                             popcount)
 
 # Some fun colors. Should be refactored. Or removed. :-)
 bold = "\033[1m"
