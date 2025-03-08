@@ -52,7 +52,7 @@ Mkfile.old
 dkms.conf
 
 # Version submodule created by makefile
-median_triplet_version.py
+# median_triplet_version.py
 
 # Useless data
 *.dat
