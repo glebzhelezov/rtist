@@ -87,11 +87,15 @@ def get_binary_subsets(unsigned int n, include_self=False,
 def replace_2_with_k(unsigned int x, int n):
     """Take 2^n_0 + ... 2^n_k and return k^n_0 + ... 2^n_k"""
     cdef int result = 0
-
+    cdef int pow_result = 0
     cdef int set_bit_position = bit_scan1(x)
 
     while set_bit_position != -1:
-        result += n ** set_bit_position
+        # Calculate n**set_bit_position using integers
+        pow_result = 1
+        for i in range(set_bit_position):
+            pow_result *= n
+        result += pow_result
         x ^= (1 << set_bit_position)
         set_bit_position = bit_scan1(x)
 

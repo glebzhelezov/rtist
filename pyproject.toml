@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools>=42", "wheel", "Cython>=3.0.0", "cysignals"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mtrip"
+description = "A package for finding the exact median triplet tree"
+readme = "README.md"
+requires-python = ">=3.6"
+license = {text = "MIT"}
+dynamic = ["version"]
+dependencies = [
+    "Cython>=3.0.0",
+    "cysignals",
+]
