@@ -1,14 +1,29 @@
 # mtrip
 
-MTrip has a few dependencies.
+`mtrip` (well, actually, `rtist`--we renamed the command for a laugh before publication, but never renamed the command!) is a package for finding exact median triplet trees.
 
-Python:
-- Cython
-- Cysignals
-- Pyinstaller (if you want binaries)
+This work is based on: [*Trying out a million genes to find the perfect pair with RTIST*](https://academic.oup.com/bioinformatics/article/38/14/3565/6596045):
 
-C:
-- GCC with OpenMP support
+```bibtex
+@article{zhelezov2022trying,
+  title={Trying out a million genes to find the perfect pair with RTIST},
+  author={Zhelezov, Gleb and Degnan, James H},
+  journal={Bioinformatics},
+  volume={38},
+  number={14},
+  pages={3565--3573},
+  year={2022},
+  publisher={Oxford University Press}
+}
+```
+
+## Installation
+
+``bash
+pip install git+https://github.com/glebzhelezov/rtist.git
+```
+
+## Change everything below...
 
 ## How to use
 
