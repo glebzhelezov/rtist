@@ -28,7 +28,7 @@ cleanall: clean libcleanall
 	rm -rfv dist
 
 clean: libcleanall
-	python setup.py clean --all
+	python3 setup.py clean --all
 	rm -fv src/mtrip/*.c
 
 libclean:

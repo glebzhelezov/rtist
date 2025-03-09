@@ -6,7 +6,7 @@ from os import path
 from os.path import exists
 
 from mtrip import median_tree_reconstruction as mtr
-from mtrip import median_triplet_version
+from mtrip import __version__
 
 
 def main():
@@ -57,7 +57,7 @@ def main():
 
     out_pickle = {
             'abigsecret':'ogurets',
-            'version':'combined_' + median_triplet_version.__version__,
+            'version':'combined_' + __version__,
             'nwks':main_nwks,
             'median_nwks':main_trees,
             'reverse_dictionary':main_reverse_dictionary,

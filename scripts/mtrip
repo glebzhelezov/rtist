@@ -7,7 +7,7 @@ from os import cpu_count
 from os.path import basename
 from time import time
 
-import mtrip.median_triplet_version
+from mtrip import __version__
 from mtrip.median_tree_reconstruction import median_triplet_trees
 
 # Some fun colors. Should be refactored. Or removed. :-)
@@ -51,7 +51,7 @@ def get_parser():
         "-v",
         "--version",
         action="version",
-        version=mtrip.median_triplet_version.__version__,
+        version=__version__,
     )
     parser.add_argument(
         "-t",
@@ -244,7 +244,7 @@ def main():
                 ]
                 to_pickle = [
                     "ogurets",
-                    mtrip.median_triplet_version.__version__,
+                    __version__,
                     nwks,
                     median_nwks,
                     reverse_dictionary,

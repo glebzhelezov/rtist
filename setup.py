@@ -125,7 +125,7 @@ setup(
     author="Gleb Zhelezov",
     author_email="gzhelezo@unm.edu",
     description="A package for finding the exact median triplet tree",
-    version="0.0.0",
+    version="0.26.5",
     package_dir={"": "src"},
     packages=find_packages(where="src"),
     ext_modules=cythonize(

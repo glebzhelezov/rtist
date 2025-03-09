@@ -6,7 +6,7 @@ import random
 import sys
 import textwrap
 
-import mtrip.median_triplet_version
+from mtrip import __version__
 from mtrip.bitsnbobs import (get_binary_subsets, init_bipart_rep_function,
                              popcount)
 
@@ -367,7 +367,7 @@ def get_parser():
         "-v",
         "--version",
         action="version",
-        version=mtrip.median_triplet_version.__version__,
+        version=__version__,
     )
 
     return parser
