@@ -1,30 +1,48 @@
 # from distutils.core import setup
-from setuptools import setup, find_packages
-from distutils.extension import Extension
-from Cython.Build import cythonize
-import platform
-import subprocess
 import os
+import platform
 import re
-from setuptools.command.build_py import build_py
 import subprocess
+from distutils.extension import Extension
+
+from Cython.Build import cythonize
+from setuptools import find_packages, setup
+from setuptools.command.build_py import build_py
+
 
 class CustomBuildCommand(build_py):
     """Run the makefile to compile the C code."""
+
     def run(self):
         try:
-            subprocess.check_call(['make', '-C', 'lib'])
+            process = subprocess.Popen(
+                ["make", "-C", "lib"],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                universal_newlines=True,
+                bufsize=1,
+            )
+
+            for line in iter(process.stdout.readline, ""):
+                print(line, end="", flush=True)
+
+            process.wait()
+
+            if process.returncode != 0:
+                raise subprocess.CalledProcessError(process.returncode, "make -C lib")
+
         except subprocess.CalledProcessError as e:
             print(f"Error running make: {e}")
             raise
-        # continue with the regular build
         build_py.run(self)
+
 
 compile_time_env = dict(HAVE_CYSIGNALS=False)
 # check if cysignals is available as an optional dependency
 try:
     import cysignals
-    compile_time_env['HAVE_CYSIGNALS'] = True
+
+    compile_time_env["HAVE_CYSIGNALS"] = True
 except ImportError:
     pass
 
@@ -107,7 +125,7 @@ setup(
     author="Gleb Zhelezov",
     author_email="gzhelezo@unm.edu",
     description="A package for finding the exact median triplet tree",
-    version="0.0",
+    version="0.0.0",
     package_dir={"": "src"},
     packages=find_packages(where="src"),
     ext_modules=cythonize(
@@ -117,7 +135,7 @@ setup(
     ),
     scripts=["scripts/mtrip", "scripts/mtrip-combine", "scripts/mtrip-suboptimal"],
     cmdclass={
-        'build_py': CustomBuildCommand,
-    }
+        "build_py": CustomBuildCommand,
+    },
     # dependencies are in pyproject.toml
 )

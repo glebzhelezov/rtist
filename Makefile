@@ -16,7 +16,7 @@ mtrip: setup.py src/mtrip/*.pyx libctriplet.a tags
 	rm -fv src/mtrip/*.c
 	# python setup.py build_ext --inplace
 	# python setup.py develop
-	python setup.py develop
+	pip3 install -e .
 
 libctriplet.a:
 	make -C $(LIB_DIR) libctriplet.a
