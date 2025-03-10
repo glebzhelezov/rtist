@@ -65,7 +65,7 @@ include_dirs = ["src/mtrip/_c_ext"]
 
 # Check if we're building a universal binary
 universal_build = False
-if os.environ.get("ARCHFLAGS", "").find("universal2") >= 0:
+if os.environ.get("ARCHFLAGS", "").find("-arch arm64") >= 0 and os.environ.get("ARCHFLAGS", "").find("-arch x86_64") >= 0:
     universal_build = True
     print("Detected universal2 build, avoiding architecture-specific flags")
 
