@@ -1,10 +1,47 @@
 import os
 import platform
 import subprocess
+import sys
 from distutils.extension import Extension
+from setuptools.command.build_ext import build_ext
 
 from Cython.Build import cythonize
 from setuptools import find_packages, setup
+
+class CMakeBuild(build_ext):
+    def run(self):
+        # Run CMake to build the C library
+        cmake_dir = os.path.abspath(os.path.dirname(__file__))
+        build_dir = os.path.join(cmake_dir, 'build')
+        
+        if not os.path.exists(build_dir):
+            os.makedirs(build_dir)
+            
+        cmake_cmd = ["cmake", ".."]
+        
+        cmake_cmd.extend(["-DCMAKE_POSITION_INDEPENDENT_CODE=ON"])
+        
+        try:
+            subprocess.check_call(cmake_cmd, cwd=build_dir)
+            
+            # Determine the build tool (make or ninja)
+            if os.path.exists(os.path.join(build_dir, "Makefile")):
+                build_cmd = ["make"]
+            elif os.path.exists(os.path.join(build_dir, "build.ninja")):
+                build_cmd = ["ninja"]
+            else:
+                print("Warning: No Makefile or build.ninja found, skipping C library build")
+                build_cmd = None
+                
+            # Build with the appropriate tool
+            if build_cmd:
+                subprocess.check_call(build_cmd, cwd=build_dir)
+        except subprocess.CalledProcessError as e:
+            print(f"Warning: CMake build failed: {e}")
+            print("Continuing with Cython build...")
+        
+        # Let setuptools handle Cython extensions
+        super().run()
 
 # used to configure setup for different configurations
 is_macos = platform.system() == "Darwin"
@@ -88,9 +125,9 @@ extensions = [comb2_extension, bitsnbobs, scipy_comb]
 setup(
     name="mtrip",
     author="Gleb Zhelezov",
-    author_email="gzhelezo@unm.edu",
-    description="A package for finding the exact median triplet tree",
-    version="0.26.5",
+    author_email="gleb@glebzh.com",
+    description="A package for finding the exact median triplet tree (in the context of phylogenetics)",
+    version="0.3.0beta",
     package_dir={"": "src"},
     packages=find_packages(where="src"),
     ext_modules=cythonize(
@@ -101,6 +138,27 @@ setup(
             "binding": True,
         },
     ),
+    cmdclass={"build_ext": CMakeBuild},
+    python_requires=">=3.6",
+    install_requires=[
+        "Cython>=3.0.0",
+        "cysignals",  # Required for proper signal handling in C extensions
+    ],
+    extras_require={
+        "dev": ["pytest>=6.0", "black", "mypy"],
+    },
+    entry_points={
+        "console_scripts": [
+            "mtrip=mtrip.cli.mtrip_cmd:main",
+            "mtrip-combine=mtrip.cli.mtrip_combine_cmd:main",
+            "mtrip-suboptimal=mtrip.cli.mtrip_suboptimal_cmd:main",
+        ],
+    },
+    classifiers=[
+        "Programming Language :: Python :: 3",
+        "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+        "Operating System :: OS Independent",
+    ],
     test_suite="tests",
     zip_safe=False,
     include_package_data=True,

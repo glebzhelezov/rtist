@@ -1,6 +1,6 @@
 [build-system]
-requires = ["scikit-build-core>=0.8.0", "cython>=3.0.0", "setuptools>=42", "wheel"]
-build-backend = "scikit_build_core.build"
+requires = ["setuptools>=42", "wheel", "cython>=3.0.0"]
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "mtrip"
@@ -37,17 +37,6 @@ dev = [
 mtrip = "mtrip.cli.mtrip_cmd:main"
 mtrip-combine = "mtrip.cli.mtrip_combine_cmd:main"
 mtrip-suboptimal = "mtrip.cli.mtrip_suboptimal_cmd:main"
-
-[tool.scikit-build]
-cmake.minimum-version = "3.12.0"
-ninja.minimum-version = "1.10.0"
-build-dir = "build/{wheel_tag}"
-cmake.targets = ["ctriplet"]
-cmake.args = []
-wheel.packages = ["src/mtrip"]
-
-[tool.scikit-build.cmake.define]
-CMAKE_POSITION_INDEPENDENT_CODE = "ON"
 
 [tool.setuptools.packages.find]
 where = ["src"]
