@@ -19,9 +19,24 @@ This work is based on: [*Trying out a million genes to find the perfect pair wit
 
 ## Installation
 
+From PyPI (recommended):
+
+```bash
+$ pip install mtrip
+```
+
+From GitHub:
+
 ```bash
 $ pip install git+https://github.com/glebzhelezov/rtist.git
 ```
+
+Binary wheels are automatically built for:
+- Linux (x86_64)
+- macOS (Intel x86_64)
+- macOS (Apple Silicon/arm64)
+
+This means no compiler is needed for installation on supported platforms.
 
 ## Building from source
 
@@ -218,4 +233,8 @@ Found 3 trees satisfying the given constraints. 🪆
 ```
 
 The output shows three trees with their scores (#26 means the tree satisfies 26 out of 50 possible triplets).
+
+## Developer Documentation
+
+For information on contributing to the project, CI/CD setup, and release process, see [README.dev.md](README.dev.md).
 

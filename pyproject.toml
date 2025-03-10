@@ -4,14 +4,14 @@ build-backend = "scikit_build_core.build"
 
 [project]
 name = "mtrip"
-version = "0.26.5"
+version = "0.3.0beta"
 readme = "README.md"
 requires-python = ">=3.6"
 license = { text = "GPLv3" }
 authors = [
-    { name = "Gleb Zhelezov", email = "gzhelezo@unm.edu" }
+    { name = "Gleb Zhelezov", email = "gleb@glebzh.com" }
 ]
-description = "A package for finding the exact median triplet tree"
+description = "A package for finding the exact median triplet tree (in the context of phylogenetics)"
 dependencies = [
     "Cython>=3.0.0",
 ]
@@ -20,6 +20,10 @@ classifiers = [
     "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
     "Operating System :: OS Independent",
 ]
+
+[project.urls]
+Homepage = "https://github.com/glebzhelezov/rtist"
+Issues = "https://github.com/glebzhelezov/rtist/issues"
 
 [project.optional-dependencies]
 signals = ["cysignals"]
