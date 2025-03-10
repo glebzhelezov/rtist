@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=42", "wheel", "cython>=3.0.0"]
+requires = ["setuptools>=42", "wheel", "cython>=3.0.0", "cysignals"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -14,6 +14,7 @@ authors = [
 description = "A package for finding the exact median triplet tree (in the context of phylogenetics)"
 dependencies = [
     "Cython>=3.0.0",
+    "cysignals",  # Required for proper signal handling in C extensions
 ]
 classifiers = [
     "Programming Language :: Python :: 3",
@@ -26,7 +27,6 @@ Homepage = "https://github.com/glebzhelezov/rtist"
 Issues = "https://github.com/glebzhelezov/rtist/issues"
 
 [project.optional-dependencies]
-signals = ["cysignals"]
 dev = [
     "pytest>=6.0",
     "black",
@@ -38,8 +38,13 @@ mtrip = "mtrip.cli.mtrip_cmd:main"
 mtrip-combine = "mtrip.cli.mtrip_combine_cmd:main"
 mtrip-suboptimal = "mtrip.cli.mtrip_suboptimal_cmd:main"
 
-[tool.setuptools.packages.find]
-where = ["src"]
+[tool.setuptools]
+packages = { find = { where = ["src"] } }
+include-package-data = true
+zip-safe = false
+
+[tool.setuptools.package-data]
+"*" = ["test_data/*.nwk"]
 
 [tool.cibuildwheel]
 build-verbosity = 1

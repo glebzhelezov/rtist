@@ -6,7 +6,7 @@ from distutils.extension import Extension
 from setuptools.command.build_ext import build_ext
 
 from Cython.Build import cythonize
-from setuptools import find_packages, setup
+from setuptools import setup
 
 class CMakeBuild(build_ext):
     def run(self):
@@ -140,14 +140,9 @@ scipy_comb = Extension(
 
 extensions = [comb2_extension, bitsnbobs, scipy_comb]
 
+# Core setup function - only for build-related configuration
+# Package metadata is now in pyproject.toml
 setup(
-    name="mtrip",
-    author="Gleb Zhelezov",
-    author_email="gleb@glebzh.com",
-    description="A package for finding the exact median triplet tree (in the context of phylogenetics)",
-    version="0.3.0beta",
-    package_dir={"": "src"},
-    packages=find_packages(where="src"),
     ext_modules=cythonize(
         extensions,
         language_level=3,
@@ -157,28 +152,5 @@ setup(
         },
     ),
     cmdclass={"build_ext": CMakeBuild},
-    python_requires=">=3.6",
-    install_requires=[
-        "Cython>=3.0.0",
-        "cysignals",  # Required for proper signal handling in C extensions
-    ],
-    extras_require={
-        "dev": ["pytest>=6.0", "black", "mypy"],
-    },
-    entry_points={
-        "console_scripts": [
-            "mtrip=mtrip.cli.mtrip_cmd:main",
-            "mtrip-combine=mtrip.cli.mtrip_combine_cmd:main",
-            "mtrip-suboptimal=mtrip.cli.mtrip_suboptimal_cmd:main",
-        ],
-    },
-    classifiers=[
-        "Programming Language :: Python :: 3",
-        "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
-        "Operating System :: OS Independent",
-    ],
     test_suite="tests",
-    zip_safe=False,
-    include_package_data=True,
-    package_data={"": ["test_data/*.nwk"]},
 )

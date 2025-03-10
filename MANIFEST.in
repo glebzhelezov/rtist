@@ -1,4 +1,4 @@
-include LICENSE README.md CLAUDE.md pyproject.toml CMakeLists.txt
+include LICENSE README.md pyproject.toml CMakeLists.txt
 include Makefile
 
 # Include C extension files
