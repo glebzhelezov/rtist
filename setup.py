@@ -101,5 +101,8 @@ setup(
             "binding": True,
         },
     ),
+    test_suite="tests",
     zip_safe=False,
+    include_package_data=True,
+    package_data={"": ["test_data/*.nwk"]},
 )

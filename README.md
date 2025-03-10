@@ -116,6 +116,24 @@ Alternatively, you can use the traditional build process.
 
 Run the commands `mtrip`, `mtrip-suboptimal`, `mtrip-combine` without any arguments to get information on how to use them. The first one is for finding the median tree(s), the second one is for finding the suboptimal trees, and the last one is for combining weights.
 
+## Testing
+
+The package includes a comprehensive test suite to verify correct functionality of all components.
+
+### Running Tests
+
+To run the full test suite:
+
+```bash
+# Run all tests
+$ python tests/run_tests.py
+
+# Run a specific test file
+$ python -m unittest tests/test_newick_parsing.py
+```
+
+See the `tests/README.md` file for more details on running and creating tests.
+
 ### Example Usage
 
 #### Finding Median Triplet Trees
