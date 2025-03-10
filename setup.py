@@ -63,8 +63,17 @@ extra_link_args = []
 library_dirs = ["src/mtrip/_c_ext"]
 include_dirs = ["src/mtrip/_c_ext"]
 
+# Check if we're building a universal binary
+universal_build = False
+if os.environ.get("ARCHFLAGS", "").find("universal2") >= 0:
+    universal_build = True
+    print("Detected universal2 build, avoiding architecture-specific flags")
+
 if is_macos:
-    if is_arm64:
+    if universal_build:
+        # Safe flags for universal builds (arm64 + x86_64)
+        opt_flags = ["-Ofast"]
+    elif is_arm64:
         opt_flags = ["-Ofast", "-mcpu=apple-m1"]
     else:
         # Intel macs
@@ -85,7 +94,10 @@ if is_macos:
     extra_compile_args = opt_flags + omp_compile_flags
     extra_link_args = omp_link_flags
 else:
-    extra_compile_args = ["-Ofast", "-march=native", "-fopenmp"]
+    if universal_build:
+        extra_compile_args = ["-Ofast", "-fopenmp"]
+    else:
+        extra_compile_args = ["-Ofast", "-march=native", "-fopenmp"]
     extra_link_args = ["-fopenmp"]
 
 
@@ -101,12 +113,18 @@ comb2_extension = Extension(
 
 # architecture-specific flags not related to OpenMP
 basic_compile_args = []
-if is_macos and is_arm64:
-    basic_compile_args = ["-Ofast", "-mcpu=apple-m1"]
-elif is_macos:
-    basic_compile_args = ["-Ofast", "-march=native"]
+if is_macos:
+    if universal_build:
+        basic_compile_args = ["-Ofast"]
+    elif is_arm64:
+        basic_compile_args = ["-Ofast", "-mcpu=apple-m1"]
+    else:
+        basic_compile_args = ["-Ofast", "-march=native"]
 else:
-    basic_compile_args = ["-Ofast", "-march=native"]
+    if universal_build:
+        basic_compile_args = ["-Ofast"]
+    else:
+        basic_compile_args = ["-Ofast", "-march=native"]
 
 bitsnbobs = Extension(
     name="mtrip.bitsnbobs",

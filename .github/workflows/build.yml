@@ -41,6 +41,15 @@ jobs:
         # First build the C library
         cmake .
         make
+        
+        # Set environment variables for macOS runners
+        if [[ "$RUNNER_OS" == "macOS" ]]; then
+          if [[ "${{ matrix.python-version }}" == "3.11" || "${{ matrix.python-version }}" == "3.12" ]]; then
+            echo "Setting ARCHFLAGS for universal2 build"
+            export ARCHFLAGS="-arch arm64 -arch x86_64 universal2"
+          fi
+        fi
+        
         # Then install the package in development mode using setuptools directly
         python setup.py develop
         
@@ -81,6 +90,7 @@ jobs:
         CIBW_SKIP: "*-musllinux_* pp*"
         CIBW_BEFORE_BUILD_MACOS: "brew install libomp"
         CIBW_BEFORE_BUILD: "pip install cysignals"
+        CIBW_ENVIRONMENT_MACOS: "ARCHFLAGS='-arch arm64 -arch x86_64 universal2'"
         CIBW_BUILD_FRONTEND: "pip"
       run: |
         python -m cibuildwheel --output-dir wheelhouse
