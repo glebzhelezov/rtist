@@ -1,23 +1,57 @@
 [build-system]
-requires = ["setuptools>=42", "wheel", "Cython>=3.0.0"]
-build-backend = "setuptools.build_meta"
+requires = ["scikit-build-core>=0.8.0", "cython>=3.0.0", "setuptools>=42", "wheel"]
+build-backend = "scikit_build_core.build"
 
 [project]
 name = "mtrip"
-dynamic = ["version"]
+version = "0.26.5"
 readme = "README.md"
 requires-python = ">=3.6"
-license = {text = "GPLv3"}
+license = { text = "GPLv3" }
 authors = [
-    {name = "Gleb Zhelezov", email = "gzhelezo@unm.edu"}
+    { name = "Gleb Zhelezov", email = "gzhelezo@unm.edu" }
 ]
 description = "A package for finding the exact median triplet tree"
 dependencies = [
     "Cython>=3.0.0",
 ]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Operating System :: OS Independent",
+]
 
 [project.optional-dependencies]
 signals = ["cysignals"]
+dev = [
+    "pytest>=6.0",
+    "black",
+    "mypy"
+]
 
-[tool.setuptools.dynamic]
-version = {attr = "mtrip.__version__"}
+[project.scripts]
+mtrip = "mtrip.cli.mtrip_cmd:main"
+mtrip-combine = "mtrip.cli.mtrip_combine_cmd:main"
+mtrip-suboptimal = "mtrip.cli.mtrip_suboptimal_cmd:main"
+
+[tool.scikit-build]
+cmake.minimum-version = "3.12.0"
+ninja.minimum-version = "1.10.0"
+build-dir = "build/{wheel_tag}"
+cmake.targets = ["ctriplet"]
+cmake.args = []
+wheel.packages = ["src/mtrip"]
+
+[tool.scikit-build.cmake.define]
+CMAKE_POSITION_INDEPENDENT_CODE = "ON"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.cibuildwheel]
+build-verbosity = 1
+skip = ["pp*", "*-musllinux*"]
+
+[tool.cibuildwheel.macos]
+environment = { MACOSX_DEPLOYMENT_TARGET = "10.15" }
+archs = ["x86_64", "arm64"]

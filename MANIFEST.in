@@ -1,0 +1,19 @@
+include LICENSE README.md CLAUDE.md pyproject.toml CMakeLists.txt
+include Makefile
+
+# Include C extension files
+recursive-include src/mtrip/_c_ext *.c *.h CMakeLists.txt
+
+# Include Cython source files
+recursive-include src/mtrip *.pyx *.py
+
+# Include type information
+include src/mtrip/py.typed
+
+# Include examples
+recursive-include examples *.nwk *.md
+
+# Exclude generated files
+global-exclude *.pyc *.o *.so
+global-exclude __pycache__
+global-exclude *.egg-info

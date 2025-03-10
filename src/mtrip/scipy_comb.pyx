@@ -1,49 +1,24 @@
-# Copied from SciPy source code!!!
+# distutils: language = c
+# cython: language_level=3
 
-cdef unsigned long _comb_int_long(unsigned long N, unsigned long k):
-    """
-    Compute binom(N, k) for integers.
-    """
-    cdef unsigned long val, j, M, nterms
+from libc.stdlib cimport malloc, free
 
-    if k > N:
+def _comb_int(N, k):
+    """
+    Compute n choose k where n and k are integers.
+    """
+    if k > N or k < 0:
         return 0
 
-    M = N + 1
-    nterms = min(k, N - k)
+    if k == 0 or k == N:
+        return 1
 
-    val = 1
+    if k > N // 2:
+        k = N - k
 
-    for j in range(1, nterms + 1):
-        val *= M - j
-        val //= j
-
-    return val
-
-def _comb_int(int N, int k):
-    # Fast path with machine integers
-    try:
-        r = _comb_int_long(N, k)
-        if r != 0:
-            return r
-    except (OverflowError, TypeError):
-        pass
-
-    # Fallback
-    N = int(N)
-    k = int(k)
-
-    if k > N or N < 0 or k < 0:
-        return 0
-
-    M = N + 1
-    nterms = min(k, N - k)
-
-    numerator = 1
-    denominator = 1
-    for j in range(1, nterms + 1):
-        numerator *= M - j
-        denominator *= j
-
-    return numerator // denominator
-
+    res = 1
+    
+    for i in range(k):
+        res = (res * (N - i)) // (i + 1)
+    
+    return res

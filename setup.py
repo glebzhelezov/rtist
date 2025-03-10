@@ -1,50 +1,10 @@
-# from distutils.core import setup
 import os
 import platform
-import re
 import subprocess
 from distutils.extension import Extension
 
 from Cython.Build import cythonize
 from setuptools import find_packages, setup
-from setuptools.command.build_py import build_py
-
-
-class CustomBuildCommand(build_py):
-    """Run the makefile to compile the C code."""
-
-    def run(self):
-        try:
-            process = subprocess.Popen(
-                ["make", "-C", "lib"],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                universal_newlines=True,
-                bufsize=1,
-            )
-
-            for line in iter(process.stdout.readline, ""):
-                print(line, end="", flush=True)
-
-            process.wait()
-
-            if process.returncode != 0:
-                raise subprocess.CalledProcessError(process.returncode, "make -C lib")
-
-        except subprocess.CalledProcessError as e:
-            print(f"Error running make: {e}")
-            raise
-        build_py.run(self)
-
-
-compile_time_env = dict(HAVE_CYSIGNALS=False)
-# check if cysignals is available as an optional dependency
-try:
-    import cysignals
-
-    compile_time_env["HAVE_CYSIGNALS"] = True
-except ImportError:
-    pass
 
 # used to configure setup for different configurations
 is_macos = platform.system() == "Darwin"
@@ -63,8 +23,8 @@ if is_macos:
 # configure compile and link arguments based on platform
 extra_compile_args = []
 extra_link_args = []
-library_dirs = ["lib"]
-include_dirs = ["lib"]
+library_dirs = ["src/mtrip/_c_ext"]
+include_dirs = ["src/mtrip/_c_ext"]
 
 if is_macos:
     if is_arm64:
@@ -87,12 +47,15 @@ if is_macos:
 
     extra_compile_args = opt_flags + omp_compile_flags
     extra_link_args = omp_link_flags
+else:
+    extra_compile_args = ["-Ofast", "-march=native", "-fopenmp"]
+    extra_link_args = ["-fopenmp"]
 
 
 comb2_extension = Extension(
     name="mtrip.triplet_omp",
     sources=["src/mtrip/triplet_omp_py.pyx"],
-    libraries=["ncurses", "ctriplet"],
+    libraries=["ctriplet"],
     library_dirs=library_dirs,
     include_dirs=include_dirs,
     extra_compile_args=extra_compile_args,
@@ -120,6 +83,8 @@ scipy_comb = Extension(
     extra_compile_args=["-lm"] + basic_compile_args,
 )
 
+extensions = [comb2_extension, bitsnbobs, scipy_comb]
+
 setup(
     name="mtrip",
     author="Gleb Zhelezov",
@@ -129,13 +94,12 @@ setup(
     package_dir={"": "src"},
     packages=find_packages(where="src"),
     ext_modules=cythonize(
-        [comb2_extension, bitsnbobs, scipy_comb],
+        extensions,
         language_level=3,
-        compile_time_env=compile_time_env,
+        compiler_directives={
+            "embedsignature": True,
+            "binding": True,
+        },
     ),
-    scripts=["scripts/mtrip", "scripts/mtrip-combine", "scripts/mtrip-suboptimal"],
-    cmdclass={
-        "build_py": CustomBuildCommand,
-    },
-    # dependencies are in pyproject.toml
+    zip_safe=False,
 )

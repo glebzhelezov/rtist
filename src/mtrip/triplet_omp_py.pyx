@@ -1,6 +1,12 @@
+# distutils: language = c
+# cython: language_level=3
+
 from cpython cimport array
 
 import array
+
+# Define HAVE_CYSIGNALS here
+DEF HAVE_CYSIGNALS = 1
 
 IF HAVE_CYSIGNALS:
     from cysignals.signals cimport sig_off, sig_on
