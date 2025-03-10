@@ -201,6 +201,6 @@ void fill_compressed_weight_representation(
     }
     fprintf(stderr, "\r");
     fflush(stderr);
-    printf("%d/%d complete (%.2f\%)\n", n_subsets, n_subsets, 100.0);
+    printf("%d/%d complete (%.2f%%)\n", n_subsets, n_subsets, 100.0);
     fflush(stdout);
 }
