@@ -1,16 +1,13 @@
 import re
-import mtrip.triplet_omp as triplet_omp
-import mtrip.scipycomb as scipycomb
-import mtrip.snoob as snoob
-from multiprocessing import Pool
-from collections import deque, Counter
+from collections import Counter, deque
 from itertools import product
-from time import perf_counter
-from functools import partial
+from multiprocessing import Pool
 from random import Random
 from textwrap import fill
-from mtrip.bitsnbobs import popcount, get_binary_subsets
-from mtrip.bitsnbobs import init_bipart_rep_function
+
+import mtrip.snoob as snoob
+import mtrip.triplet_omp as triplet_omp
+from mtrip.bitsnbobs import get_binary_subsets, init_bipart_rep_function, popcount
 
 # I know I shouldn't do this :(
 # Only use multiprocessing for basic parsing if the list of nwks is quite long
@@ -35,9 +32,7 @@ def get_line_names(i, nwk):
     tokens = re.findall(r"([(,])([a-zA-Z0-9]*)(?::\d*(\.\d*)?)?(?=[,)])", nwk)
     cur_names = [t[1] for t in tokens]
     if "" in cur_names:
-        raise SyntaxError(
-            "Unlabeled tip in Newick string on line {}!".format(i + 1)
-        )
+        raise SyntaxError("Unlabeled tip in Newick string on line {}!".format(i + 1))
     return cur_names
 
 
@@ -115,7 +110,7 @@ def get_biparts(nwk, dictionary):
 
 def get_subset_biparts(weights):
     biparts_per_set = dict()
-    for (a, b) in weights.keys():
+    for a, b in weights.keys():
         c = a + b
         if c in biparts_per_set:
             biparts_per_set[c].append((a, b))
@@ -156,7 +151,9 @@ def get_weights_parallel(gts_nwks, dictionary, n_threads=1):
 
     with Pool(n_threads) as p:
         for res in p.starmap(
-            get_biparts, product(gts_nwks, [dictionary]), chunksize=chunk,
+            get_biparts,
+            product(gts_nwks, [dictionary]),
+            chunksize=chunk,
         ):
             all_biparts.extend(res)
 
@@ -168,12 +165,12 @@ def get_stack(bipartition_weights, n_species):
     # The "stack" gives the best weight of each subset
     f = init_bipart_rep_function(n_species)
     # Score of each triple
-    stack = triplet_omp.zero_array(2 ** n_species, "i")
+    stack = triplet_omp.zero_array(2**n_species, "i")
     # stack = np.zeros(2 ** n_species, dtype=np.intc)
     # Each subset has a list of the maximizing bipartitions
-    best_biparts = [[] for _ in range(2 ** n_species)]
+    best_biparts = [[] for _ in range(2**n_species)]
 
-    universe = 2 ** n_species - 1
+    universe = 2**n_species - 1
 
     # Fill up the stack
     for n in range(3, n_species + 1):
@@ -238,9 +235,7 @@ def process_nwks(nwks, n_threads=1):
     # Get the weights of the bipartitions in the GTs
     print("* Calculating each GT bipartition's weight.")
     # weights = get_weights(nwks_simplified, dictionary)
-    weights = get_weights_parallel(
-        nwks_simplified, dictionary, n_threads=n_threads
-    )
+    weights = get_weights_parallel(nwks_simplified, dictionary, n_threads=n_threads)
     # Get the biparts by the subset (i.e. (a+b)->[(a,b),...]
     print("* Matching bipartitions to subsets.")
     biparts_by_subset = get_subset_biparts(weights)
@@ -263,7 +258,7 @@ def process_nwks(nwks, n_threads=1):
         subsets.append(subset)
         start_i.append(position)
         biparts = biparts_by_subset[subset]
-        for (a, b) in biparts:
+        for a, b in biparts:
             biparts_a.append(a)
             biparts_b.append(b)
             bipart_weights.append(weights[(a, b)])
@@ -291,7 +286,7 @@ def get_present_species(x, reverse_dictionary):
     return [
         reverse_dictionary[i]
         for i in range(len(reverse_dictionary))
-        if x & (2 ** i) == 2 ** i
+        if x & (2**i) == 2**i
     ]
 
 
@@ -304,7 +299,7 @@ def _get_all_trees(x, reverse_dictionary, best_biparts):
         names = get_present_species(x, reverse_dictionary)
         all_trees.append("({},{})".format(*names))
     else:
-        for (a, b) in best_biparts[x]:
+        for a, b in best_biparts[x]:
             a_trees = _get_all_trees(a, reverse_dictionary, best_biparts)
             b_trees = _get_all_trees(b, reverse_dictionary, best_biparts)
 
@@ -316,9 +311,7 @@ def _get_all_trees(x, reverse_dictionary, best_biparts):
 
 
 def get_all_trees(x, reverse_dictionary, best_biparts):
-    return [
-        t + ";" for t in _get_all_trees(x, reverse_dictionary, best_biparts)
-    ]
+    return [t + ";" for t in _get_all_trees(x, reverse_dictionary, best_biparts)]
 
 
 def median_triplet_trees(nwks, n_threads=1, return_extra=False):
@@ -332,19 +325,18 @@ def median_triplet_trees(nwks, n_threads=1, return_extra=False):
                 and reverse dictionary
     """
     triplet_weights, dictionary, reverse_dictionary = process_nwks(
-        nwks, n_threads=n_threads,
+        nwks,
+        n_threads=n_threads,
     )
 
     n_species = len(reverse_dictionary)
 
     stack, best_biparts = get_stack(triplet_weights, n_species)
     # bitset representation of all the tips
-    x = 2 ** n_species - 1
+    x = 2**n_species - 1
     # This assumes each GT has all the species, so this is actually not a
     # sharp upper bound!
-    theoretical_bound = (
-        len(nwks) * n_species * (n_species - 1) * (n_species - 2) // 6
-    )
+    theoretical_bound = len(nwks) * n_species * (n_species - 1) * (n_species - 2) // 6
     print(
         "Best possible triplet count is {}, out of a maximum of {}.".format(
             stack[x], theoretical_bound

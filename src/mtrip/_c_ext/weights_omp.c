@@ -1,46 +1,13 @@
 #include "weights_omp.h"
 #include "lookup_table.h"
 #include <math.h>
-#include <omp.h>
 #include <stdio.h>
 #include <stdlib.h>
-/*#include "progressbar.h"
-#include "statusbar.h"*/
 
-/*
-   int main() {
-   int left_sets[] = {5,2,15,4,3,1,2,4,2,7,5};
-   int right_sets[] = {8,13,16,9,12,12,9,11,5,8,10};
-   int bipart_weights[] = {10,37,50,12,5,15,5,5,1,1,2};
-   int n_biparts = 11;
-   int n_species = 16;
-
-   int *weights;
-// Do the calculations B-)
-int n_threads = 1;
-get_compressed_weight_representation(left_sets, right_sets, bipart_weights,
-n_biparts, n_species, &weights, n_threads);
-
-int left, right;
-int *two2three;
-calculate_two2three(&two2three, n_species);
-//get_optimal_bipart(ipow(2,n_species)-1, &left, &right, weights, two2three);
-
-// Should probably create a separate function like,
-// fill_compressed_rep_matrix( .... ) so it can be called directly
-// from Python with NumPy arrays.
-
-printf("[");
-for (int i=0; i<2*3*3*3*3; i++) {
-printf("%d, ", weights[i]);
-}
-printf("]");
-free(weights);
-free(two2three);
-
-return 0;
-}
-*/
+// Only include OpenMP if not explicitly disabled
+#ifndef NO_OMP
+#include <omp.h>
+#endif
 
 /* Calculate n choose 2. */
 inline int combinations_2(int n) { return (n * (n - 1)) / 2; }
@@ -117,8 +84,9 @@ void fill_compressed_weight_representation(
     int *two2three, int n_threads) {
     /* Iterate over all the (sub)bi-partitions. */
     int loop_progress = 0;
-    /*progressbar *progbar = progressbar_new("Progress", n_subsets);*/
-#pragma omp parallel num_threads(n_threads)
+    
+    #ifndef NO_OMP
+    #pragma omp parallel num_threads(n_threads)
     {
         /* Get actual number of threads, and this thread's ID */
         int n_threads_assigned = omp_get_num_threads();
@@ -127,6 +95,14 @@ void fill_compressed_weight_representation(
         if (thread_id_private == 0) {
             printf("Using %d threads.\n", n_threads_assigned);
         }
+    #else
+    {
+        /* Single-threaded version */
+        printf("Using 1 thread (OpenMP not available).\n");
+        int n_threads_assigned = 1;
+        int thread_id_private = 0;
+    #endif
+        
         /* Calculate the progress this thread is making, to eventually add
          * to the progress bar. */
         int counter_private = 0;
@@ -137,7 +113,10 @@ void fill_compressed_weight_representation(
          * set of all species in the data. */
         int universe = (1 << n_species) - 1;
         /* Iterate over all possible values of a+b, where (a,b) is a bipart. */
-#pragma omp for schedule(static)
+        
+    #ifndef NO_OMP
+    #pragma omp for schedule(static)
+    #endif
         for (int subset_i = 0; subset_i < n_subsets; subset_i++) {
             int bitmask = subsets[subset_i];
             int kernel = universe - bitmask;
@@ -181,7 +160,9 @@ void fill_compressed_weight_representation(
                                 int rep = compressed_rep(x, y, two2three);
 
                                 /* Update the weights array */
-#pragma omp atomic update
+                                #ifndef NO_OMP
+                                #pragma omp atomic update
+                                #endif
                                 weights[rep] += weight_increment;
 
                                 /* This is necessary to break out of an endless
@@ -203,7 +184,9 @@ void fill_compressed_weight_representation(
 
             if (counter_private % output_step == 0) {
                 /* Update the overall counter one thread at a time */
-#pragma omp atomic update
+                #ifndef NO_OMP
+                #pragma omp atomic update
+                #endif
                 loop_progress = loop_progress + counter_private;
                 counter_private = 0;
                 /* Only update the progress bar by the master thread */
@@ -212,7 +195,6 @@ void fill_compressed_weight_representation(
                     fprintf(stderr, "\r%d/%d complete (%.2f%%)", loop_progress,
                             n_subsets, (100.0 * loop_progress) / n_subsets);
                     fflush(stderr);
-                    /*progressbar_update(progbar, loop_progress);*/
                 }
             }
         }
@@ -221,37 +203,4 @@ void fill_compressed_weight_representation(
     fflush(stderr);
     printf("%d/%d complete (%.2f\%)\n", n_subsets, n_subsets, 100.0);
     fflush(stdout);
-    /*progressbar_update(progbar, n_subsets);
-    progressbar_finish(progbar);*/
 }
-
-// void get_compressed_weight_representation(
-//         int *left_sets,
-//         int *right_sets,
-//         int *bipart_weights,
-//         int n_biparts,
-//         int n_species,
-//         int **weights,
-//         int n_threads) {
-//
-//     /* Calculate the two2three arrya necessary for quick bipart encoding. */
-//     int *two2three;
-//     calculate_two2three(&two2three, n_species);
-//
-//     /*int weights_size = (int)(pow(3, n_species-1) + 0.5);*/
-//     int weights_size = 2*ipow(3, n_species-1);
-//     /*int *weights;*/
-//     *weights = calloc(weights_size, sizeof(int));
-//     if (weights == NULL) {
-//         printf("Failed to create weights array.\n");
-//         return;
-//     }
-//
-//     fill_compressed_weight_representation(left_sets, right_sets,
-//     bipart_weights,
-//             n_biparts, n_species, *weights, two2three, n_threads);
-//
-//     free(two2three);
-//
-//     return;
-// }
