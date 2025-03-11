@@ -19,12 +19,18 @@ This work is based on: [*Trying out a million genes to find the perfect pair wit
 
 ## Installation
 
-From GitHub:
-
+With pip (recommended):
 ```bash
-$ pip install git+https://github.com/glebzhelezov/rtist.git
+$ pip install rtist
+```
+Now `mtrip`, `mtrip-suboptimal` and `mtrip-combine` are all available in the virtual environment you installed the package in.
+
+If you have uv installed, you can run the tool as follows, without installation:
+```bash
+$ uvx --with rtist mtrip
 ```
 
+## From source
 ### Prerequisites
 
 - CMake (version 3.12 or higher)
@@ -218,8 +224,3 @@ Found 3 trees satisfying the given constraints. 🪆
 ```
 
 The output shows three trees with their scores (#26 means the tree satisfies 26 out of 50 possible triplets).
-
-## Developer Documentation
-
-For information on contributing to the project, CI/CD setup, and release process, see [README.dev.md](README.dev.md).
-
