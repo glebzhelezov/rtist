@@ -68,6 +68,10 @@ universal_build = False
 if os.environ.get("ARCHFLAGS", "").find("-arch arm64") >= 0 and os.environ.get("ARCHFLAGS", "").find("-arch x86_64") >= 0:
     universal_build = True
     print("Detected universal2 build, avoiding architecture-specific flags")
+# Also detect CI environment with GitHub Actions
+elif os.environ.get("GITHUB_ACTIONS") == "true" and is_macos:
+    universal_build = True
+    print("Detected GitHub Actions CI on macOS, avoiding architecture-specific flags")
 
 if is_macos:
     if universal_build:

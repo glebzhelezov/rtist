@@ -39,8 +39,15 @@ jobs:
     - name: Build and install package
       run: |
         # First build the C library
-        # cmake .
-        # make
+        cmake .
+        make
+        
+        # Add OpenMP library path to environment variables (macOS)
+        if [ "$RUNNER_OS" == "macOS" ]; then
+          export LIBRARY_PATH=$(pwd):$LIBRARY_PATH
+          export LD_LIBRARY_PATH=$(pwd):$LD_LIBRARY_PATH
+          export DYLD_LIBRARY_PATH=/usr/local/opt/libomp/lib:$DYLD_LIBRARY_PATH
+        fi
         
         # Then install the package in development mode using setuptools directly
         python setup.py develop

@@ -3,7 +3,12 @@ project(ctriplet C)
 
 # Set optimization flags based on architecture
 if(APPLE)
-    if(CMAKE_SYSTEM_PROCESSOR STREQUAL "arm64")
+    # Check if in GitHub Actions
+    if(DEFINED ENV{GITHUB_ACTIONS} AND "$ENV{GITHUB_ACTIONS}" STREQUAL "true")
+        # Use safe flags for GitHub Actions builds
+        set(OPT_FLAGS "-Ofast")
+        message(STATUS "Using safe optimization flags for GitHub Actions")
+    elseif(CMAKE_SYSTEM_PROCESSOR STREQUAL "arm64")
         set(OPT_FLAGS "-Ofast -mcpu=apple-m1")
     else()
         set(OPT_FLAGS "-Ofast -march=native")
