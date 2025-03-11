@@ -2,10 +2,10 @@ name: Build and Test
 
 on:
   push:
-    branches: [ main ]
+    branches: [ cicd_debug ]
     tags: ['v*']
   pull_request:
-    branches: [ main ]
+    branches: [ cicd_debug ]
   workflow_dispatch:
 
 jobs:
@@ -15,8 +15,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-13]
-        python-version: ["3.10", "3.11", "3.12", "3.13"]
+        os: [ubuntu-latest, macos-latest, macos-13]
+        python-version: ["3.11"] #["3.10", "3.11", "3.12", "3.13"]
 
     steps:
     - uses: actions/checkout@v4
@@ -42,15 +42,6 @@ jobs:
         cmake .
         make
         
-        # Set environment variables for macOS runners
-        if [[ "$RUNNER_OS" == "macOS" ]]; then
-          # For Python 3.11+ set universal2 build flags to ensure compatibility
-          if [[ "${{ matrix.python-version }}" > "3.10" ]]; then
-            echo "Setting ARCHFLAGS for universal2 build"
-            export ARCHFLAGS="-arch arm64 -arch x86_64"
-          fi
-        fi
-        
         # Then install the package in development mode using setuptools directly
         python setup.py develop
         
@@ -58,14 +49,10 @@ jobs:
       run: |
         pytest
 
-  build_wheels:
-    name: Build wheels on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
+  build_wheels_linux:
+    name: Build Linux wheels
+    runs-on: ubuntu-latest
     needs: test
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, macos-latest]
         
     steps:
     - uses: actions/checkout@v4
@@ -75,8 +62,39 @@ jobs:
       with:
         python-version: '3.11'
         
-    - name: Install OpenMP (macOS)
-      if: runner.os == 'macOS'
+    - name: Install cibuildwheel
+      run: |
+        python -m pip install cibuildwheel
+        
+    - name: Build wheels
+      env:
+        CIBW_BUILD: "cp312-*" #"cp310-* cp311-* cp312-*"
+        CIBW_SKIP: "*-musllinux_* pp*"
+        CIBW_BEFORE_BUILD: "pip install cython setuptools wheel cysignals && cmake . && make"
+        CIBW_BUILD_FRONTEND: "pip"
+      run: |
+        python -m cibuildwheel --output-dir wheelhouse
+        
+    - name: Upload wheels as artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: wheels-linux
+        path: ./wheelhouse/*.whl
+
+  build_wheels_macos_arm64:
+    name: Build macOS arm64 wheels
+    runs-on: macos-latest  # Uses arm64 architecture
+    needs: test
+        
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        
+    - name: Install OpenMP
       run: |
         brew install libomp
         
@@ -86,12 +104,10 @@ jobs:
         
     - name: Build wheels
       env:
-        CIBW_ARCHS_MACOS: "x86_64 arm64"
-        CIBW_BUILD: "cp310-* cp311-* cp312-*"
-        CIBW_SKIP: "*-musllinux_* pp*"
-        CIBW_BEFORE_BUILD_LINUX: "pip install cython setuptools wheel cysignals && cmake . && make"
-        CIBW_BEFORE_BUILD_MACOS: "brew install libomp && pip install cython setuptools wheel cysignals && cmake . && make"
-        CIBW_ENVIRONMENT_MACOS: "ARCHFLAGS='-arch arm64 -arch x86_64' LIBRARY_PATH=$(pwd):$LIBRARY_PATH LD_LIBRARY_PATH=$(pwd):$LD_LIBRARY_PATH"
+        CIBW_ARCHS: "arm64"
+        CIBW_BUILD: "cp312-*" #"cp310-* cp311-* cp312-*"
+        CIBW_BEFORE_BUILD: "brew install libomp && pip install cython setuptools wheel cysignals && cmake . && make"
+        CIBW_ENVIRONMENT: "LIBRARY_PATH=$(pwd):$LIBRARY_PATH LD_LIBRARY_PATH=$(pwd):$LD_LIBRARY_PATH"
         CIBW_BUILD_FRONTEND: "pip"
       run: |
         python -m cibuildwheel --output-dir wheelhouse
@@ -99,15 +115,14 @@ jobs:
     - name: Upload wheels as artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: wheels-${{ matrix.os }}
+        name: wheels-macos-arm64
         path: ./wheelhouse/*.whl
+
+  build_wheels_macos_x86_64:
+    name: Build macOS x86_64 wheels
+    runs-on: macos-13  # Still supports x86_64 builds
+    needs: test
         
-  publish:
-    name: Publish to PyPI
-    runs-on: ubuntu-latest
-    needs: build_wheels
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
-    
     steps:
     - uses: actions/checkout@v4
     
@@ -116,26 +131,64 @@ jobs:
       with:
         python-version: '3.11'
         
-    - name: Install dependencies
+    - name: Install OpenMP
       run: |
-        python -m pip install --upgrade pip
-        pip install build twine
+        brew install libomp
         
-    - name: Download wheels
-      uses: actions/download-artifact@v4
-      with:
-        path: dist
-        pattern: wheels-*
-        merge-multiple: true
-        
-    - name: Build source distribution
+    - name: Install cibuildwheel
       run: |
-        python -m build --sdist
+        python -m pip install cibuildwheel
         
-    - name: Publish to PyPI
-      if: startsWith(github.ref, 'refs/tags/v')
+    - name: Build wheels
       env:
-        TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
-        TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+        CIBW_ARCHS: "x86_64"
+        CIBW_BUILD: "cp312-*" #"cp310-* cp311-* cp312-*"
+        CIBW_BEFORE_BUILD: "brew install libomp && pip install cython setuptools wheel cysignals && cmake . && make"
+        CIBW_ENVIRONMENT: "LIBRARY_PATH=$(pwd):$LIBRARY_PATH LD_LIBRARY_PATH=$(pwd):$LD_LIBRARY_PATH"
+        CIBW_BUILD_FRONTEND: "pip"
       run: |
-        twine upload dist/*
+        python -m cibuildwheel --output-dir wheelhouse
+        
+    - name: Upload wheels as artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: wheels-macos-x86_64
+        path: ./wheelhouse/*.whl
+        
+  # publish:
+  #   name: Publish to PyPI
+  #   runs-on: ubuntu-latest
+  #   needs: [build_wheels_linux, build_wheels_macos_arm64, build_wheels_macos_x86_64]
+  #   if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+  #   
+  #   steps:
+  #   - uses: actions/checkout@v4
+  #   
+  #   - name: Set up Python
+  #     uses: actions/setup-python@v5
+  #     with:
+  #       python-version: '3.11'
+  #       
+  #   - name: Install dependencies
+  #     run: |
+  #       python -m pip install --upgrade pip
+  #       pip install build twine
+  #       
+  #   - name: Download wheels
+  #     uses: actions/download-artifact@v4
+  #     with:
+  #       path: dist
+  #       pattern: wheels-*
+  #       merge-multiple: true
+  #       
+  #   - name: Build source distribution
+  #     run: |
+  #       python -m build --sdist
+  #       
+  #   - name: Publish to PyPI
+  #     if: startsWith(github.ref, 'refs/tags/v')
+  #     env:
+  #       TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+  #       TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+  #     run: |
+  #       twine upload dist/*
