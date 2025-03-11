@@ -39,8 +39,8 @@ jobs:
     - name: Build and install package
       run: |
         # First build the C library
-        cmake .
-        make
+        # cmake .
+        # make
         
         # Then install the package in development mode using setuptools directly
         python setup.py develop
