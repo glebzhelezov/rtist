@@ -2,10 +2,10 @@ name: Build and Test
 
 on:
   push:
-    branches: [ cicd_debug ]
+    branches: [ main ]
     tags: ['v*']
   pull_request:
-    branches: [ cicd_debug ]
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
@@ -16,7 +16,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-13]
-        python-version: ["3.11"] #["3.10", "3.11", "3.12", "3.13"]
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
 
     steps:
     - uses: actions/checkout@v4
@@ -75,7 +75,7 @@ jobs:
         
     - name: Build wheels
       env:
-        CIBW_BUILD: "cp312-*" #"cp310-* cp311-* cp312-*"
+        CIBW_BUILD: "cp313-* cp310-* cp311-* cp312-*"
         CIBW_SKIP: "*-musllinux_* pp*"
         CIBW_BEFORE_BUILD: "pip install cython setuptools wheel cysignals && cmake . && make"
         CIBW_BUILD_FRONTEND: "pip"
@@ -112,7 +112,7 @@ jobs:
     - name: Build wheels
       env:
         CIBW_ARCHS: "arm64"
-        CIBW_BUILD: "cp312-*" #"cp310-* cp311-* cp312-*"
+        CIBW_BUILD: "cp313-* cp310-* cp311-* cp312-*"
         CIBW_BEFORE_BUILD: "brew install libomp && pip install cython setuptools wheel cysignals && cmake . && make"
         CIBW_ENVIRONMENT: "LIBRARY_PATH=$(pwd):$LIBRARY_PATH LD_LIBRARY_PATH=$(pwd):$LD_LIBRARY_PATH DYLD_LIBRARY_PATH=/usr/local/opt/libomp/lib:$DYLD_LIBRARY_PATH MACOSX_DEPLOYMENT_TARGET=14.0"
         CIBW_BUILD_FRONTEND: "pip"
@@ -149,7 +149,7 @@ jobs:
     - name: Build wheels
       env:
         CIBW_ARCHS: "x86_64"
-        CIBW_BUILD: "cp312-*" #"cp310-* cp311-* cp312-*"
+        CIBW_BUILD: "cp313-* cp310-* cp311-* cp312-*"
         CIBW_BEFORE_BUILD: "brew install libomp && pip install cython setuptools wheel cysignals && cmake . && make"
         CIBW_ENVIRONMENT: "LIBRARY_PATH=$(pwd):$LIBRARY_PATH LD_LIBRARY_PATH=$(pwd):$LD_LIBRARY_PATH DYLD_LIBRARY_PATH=/usr/local/opt/libomp/lib:$DYLD_LIBRARY_PATH MACOSX_DEPLOYMENT_TARGET=14.0"
         CIBW_BUILD_FRONTEND: "pip"
@@ -162,40 +162,40 @@ jobs:
         name: wheels-macos-x86_64
         path: ./wheelhouse/*.whl
         
-  # publish:
-  #   name: Publish to PyPI
-  #   runs-on: ubuntu-latest
-  #   needs: [build_wheels_linux, build_wheels_macos_arm64, build_wheels_macos_x86_64]
-  #   if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
-  #   
-  #   steps:
-  #   - uses: actions/checkout@v4
-  #   
-  #   - name: Set up Python
-  #     uses: actions/setup-python@v5
-  #     with:
-  #       python-version: '3.11'
-  #       
-  #   - name: Install dependencies
-  #     run: |
-  #       python -m pip install --upgrade pip
-  #       pip install build twine
-  #       
-  #   - name: Download wheels
-  #     uses: actions/download-artifact@v4
-  #     with:
-  #       path: dist
-  #       pattern: wheels-*
-  #       merge-multiple: true
-  #       
-  #   - name: Build source distribution
-  #     run: |
-  #       python -m build --sdist
-  #       
-  #   - name: Publish to PyPI
-  #     if: startsWith(github.ref, 'refs/tags/v')
-  #     env:
-  #       TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
-  #       TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-  #     run: |
-  #       twine upload dist/*
+  publish:
+    name: Publish to PyPI
+    runs-on: ubuntu-latest
+    needs: [build_wheels_linux, build_wheels_macos_arm64, build_wheels_macos_x86_64]
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install build twine
+        
+    - name: Download wheels
+      uses: actions/download-artifact@v4
+      with:
+        path: dist
+        pattern: wheels-*
+        merge-multiple: true
+        
+    - name: Build source distribution
+      run: |
+        python -m build --sdist
+        
+    - name: Publish to PyPI
+      if: startsWith(github.ref, 'refs/tags/v')
+      env:
+        TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+        TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+      run: |
+        twine upload dist/*
