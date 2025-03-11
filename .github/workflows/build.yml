@@ -90,7 +90,7 @@ jobs:
         CIBW_BUILD: "cp310-* cp311-* cp312-*"
         CIBW_SKIP: "*-musllinux_* pp*"
         CIBW_BEFORE_BUILD_MACOS: "brew install libomp"
-        CIBW_BEFORE_BUILD: "pip install cysignals"
+        CIBW_BEFORE_BUILD: "pip install cython setuptools wheel cysignals && cmake . && make"
         CIBW_ENVIRONMENT_MACOS: "ARCHFLAGS='-arch arm64 -arch x86_64'"
         CIBW_BUILD_FRONTEND: "pip"
       run: |
