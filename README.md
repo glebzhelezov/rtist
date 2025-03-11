@@ -20,13 +20,13 @@ This work is based on: [*Trying out a million genes to find the perfect pair wit
 ## Installation
 
 With pip (recommended):
-```bash
+```
 $ pip install rtist
 ```
 Now `mtrip`, `mtrip-suboptimal` and `mtrip-combine` are all available in the virtual environment you installed the package in.
 
 If you have uv installed, you can run the tool as follows, without installation:
-```bash
+```
 $ uvx --with rtist mtrip
 ```
 
@@ -42,7 +42,7 @@ $ uvx --with rtist mtrip
 
 On macOS, OpenMP support requires installing `libomp` with Homebrew:
 
-```bash
+```
 $ brew install libomp
 ```
 
@@ -50,14 +50,14 @@ $ brew install libomp
 
 1. Clone the repository:
 
-   ```bash
+   ```
    $ git clone https://github.com/glebzhelezov/rtist.git
    $ cd rtist
    ```
 
 2. Install using pip (recommended):
 
-   ```bash
+   ```
    $ pip install -e .
    ```
 
@@ -71,31 +71,31 @@ Alternatively, you can use the traditional build process.
 
  1. Generate a build script with CMake:    
 
-    ```bash
+    ```
     $ cmake -B build
     ```
 
  2. Build C library:
 
-    ```bash
+    ```
     $ cmake --build build
     ```
 
  3. Install `mtrip`:
 
-    ```bash
+    ```
     $ pip install .
     ```
 
  4. `mtrip` will be available as a command whenever you activate the virtual environment that was used during installation. To verify that this is the case, run:
 
-    ```bash
+    ```
     $ mtrip -h
     ```
 
     which should output:
 
-    ```bash
+    ```
     mtrip -h
     usage: mtrip [-h] [-v] [-t THREADS] [--novalidate] [-n] [-p] [-b BINARY] i [o]
     
@@ -130,7 +130,7 @@ The package includes a comprehensive test suite to verify correct functionality 
 
 To run the full test suite:
 
-```bash
+```
 # Run all tests
 $ python tests/run_tests.py
 
@@ -144,7 +144,7 @@ See the `tests/README.md` file for more details on running and creating tests.
 
 #### Finding Median Triplet Trees
 
-```bash
+```
 # Process input file of Newick strings and write results to default output file
 $ mtrip examples/example_5tips.nwk
 Using 8 threads.
@@ -178,14 +178,14 @@ Done!
 
 First, run `mtrip` with the `-b` flag to save the weights:
 
-```bash
+```
 # Save weights to a binary file for later use with mtrip-suboptimal
 $ mtrip examples/example_5tips.nwk -b example_5tips_weights.p
 ```
 
 Then use `mtrip-suboptimal` to find trees that are close to optimal:
 
-```bash
+```
 $ mtrip-suboptimal -y example_5tips_weights.p
 Input parameters:
 Input file  : example_5tips_weights.p
