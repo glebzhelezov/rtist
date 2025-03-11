@@ -1,4 +1,4 @@
-# mtrip
+# mtrip/rtist
 
 `mtrip` (well, actually, `rtist`--we renamed the command for a laugh before publication, but never renamed the command!) is a package for finding exact median triplet trees.
 
