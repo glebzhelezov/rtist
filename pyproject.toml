@@ -15,6 +15,7 @@ description = "A package for finding the exact median triplet tree (in the conte
 dependencies = [
     "Cython>=3.0.0",
     "cysignals",  # Required for proper signal handling in C extensions
+    "textual>=0.50.0",  # Modern TUI framework
 ]
 classifiers = [
     "Programming Language :: Python :: 3",
@@ -37,6 +38,7 @@ dev = [
 mtrip = "mtrip.cli.mtrip_cmd:main"
 mtrip-combine = "mtrip.cli.mtrip_combine_cmd:main"
 mtrip-suboptimal = "mtrip.cli.mtrip_suboptimal_cmd:main"
+mtrip-ui = "mtrip.cli.mtrip_ui:main"
 
 [tool.setuptools]
 packages = { find = { where = ["src"] } }
