@@ -1,5 +1,4 @@
 #include "lookup_table.h"
-#include "weights_omp.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -22,7 +21,7 @@ void fill_two2three(int *two2three, int n) {
     /* Create a lookup table for powers of three. */
     int *pows = malloc(n * sizeof(int));
     if (pows == NULL) {
-        printf("Failed to create pows array.\n");
+        fprintf(stderr, "Failed to create pows array.\n");
         return;
     }
 
@@ -61,8 +60,8 @@ void calculate_two2three(int **two2three, int n) {
      * 111..(n ones)...1 = 2^n - 1 */
     int array_size = ipow(2, n);
     *two2three = malloc(array_size * sizeof(int));
-    if (two2three == NULL) {
-        printf("Failed to allocate two2three array.\n");
+    if (*two2three == NULL) {
+        fprintf(stderr, "Failed to allocate two2three array.\n");
         return;
     }
 
@@ -84,22 +83,3 @@ int compressed_rep(int a, int b, int *two2three) {
 
     return compressed;
 }
-
-/*
-int main() {
-    int n = 16;
-    int *two2three;
-    calculate_two2three(&two2three, n);
-    int a = 2 + 4;
-    int b = 128 + 8 + 16 + 32;
-    int a_3 = two2three[a];
-    int b_3 = two2three[b];
-    int rep1 = a_3 + 2*b_3;
-    int rep2 = 2*a_3 + b_3;
-    int comp = compressed_rep(a,b,two2three);
-    printf("The compressed rep is %d\n", comp);
-
-    free(two2three);
-
-    return 0;
-}*/
