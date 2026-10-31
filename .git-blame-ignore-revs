@@ -1,3 +1,5 @@
 # Formatting-only commits; use with: git config blame.ignoreRevsFile .git-blame-ignore-revs
 # ruff format
 3741393ce89326663f4dea0531a5854ddbc9d92d
+# clang-format
+52c6118ba50292c3604fbe6585a649c95d6c1164
