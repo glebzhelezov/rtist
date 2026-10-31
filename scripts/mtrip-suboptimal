@@ -36,19 +36,14 @@ def pickle_warning(filename):
     )
     print(textwrap.fill(s))
     print()
-    s = (
-        "You can avoid this interactive warning in the future "
-        "by using the -y flag."
-    )
+    s = "You can avoid this interactive warning in the future by using the -y flag."
     print(textwrap.fill(s))
     print()
 
     verification = ""
 
     while verification not in {"y", "n"}:
-        verification = input(
-            "Load the file {}{}{}? (y/n) ".format(bold, filename, end)
-        )
+        verification = input("Load the file {}{}{}? (y/n) ".format(bold, filename, end))
         verification = verification.lower().strip()
 
     if verification == "n":
@@ -72,7 +67,7 @@ def get_candidates(
 ):
     rng = random.Random(seed)
     n_species = len(reverse_dictionary)
-    universe = 2 ** n_species - 1
+    universe = 2**n_species - 1
     # This is a function which maps (a,b) to the base-3 representation
     bipart_rep = init_bipart_rep_function(n_species)
 
@@ -89,7 +84,7 @@ def get_candidates(
             "biparts": {a + b: (a, b)},
             "active": [],
         }
-        for (a, b) in get_biparts(2 ** n_species - 1)
+        for (a, b) in get_biparts(2**n_species - 1)
         if maximal_val(a, b) >= min_score
     ]
 
@@ -116,8 +111,7 @@ def get_candidates(
     # Burn in
     print("* Beginning burn-in")
     while (
-        len(candidates) != 0
-        and len(candidates) + len(finished_candidates) < n_burnin
+        len(candidates) != 0 and len(candidates) + len(finished_candidates) < n_burnin
     ):
         # We'll fill this up with the new splits
         new_candidates = []
@@ -144,10 +138,8 @@ def get_candidates(
                 new_candidate["biparts"] = candidate["biparts"].copy()
                 new_candidate["active"] = []
 
-                for (a, b) in splits:
-                    new_candidate["curscore"] += triplet_weights[
-                        bipart_rep(a, b)
-                    ]
+                for a, b in splits:
+                    new_candidate["curscore"] += triplet_weights[bipart_rep(a, b)]
                     new_candidate["biparts"][a + b] = (a, b)
                     for x in (a, b):
                         if popcount(x) > 2:
@@ -156,20 +148,14 @@ def get_candidates(
                 if len(new_candidate["active"]) > 0:
                     new_candidates.append(new_candidate)
                     # Stop if we've gathered enough
-                    if (
-                        len(new_candidates) + len(finished_candidates)
-                        >= n_burnin
-                    ):
+                    if len(new_candidates) + len(finished_candidates) >= n_burnin:
                         break
                 # This shouldn't happen if all the candidates were initialized
                 # at the same time + the constants are reasonable
                 else:
                     finished_candidates.append(new_candidate)
                     # Stop if we've gathered enough
-                    if (
-                        len(new_candidates) + len(finished_candidates)
-                        >= n_burnin
-                    ):
+                    if len(new_candidates) + len(finished_candidates) >= n_burnin:
                         break
                 # This shouldn't happen if all the candidates were initialized
                 # at the same time + the constants are reasonable
@@ -201,7 +187,8 @@ def get_candidates(
     else:
         print("* Picking random subset of tree candidates")
         chosen_paths = rng.choices(
-            candidates + finished_candidates, k=n_trees,
+            candidates + finished_candidates,
+            k=n_trees,
         )
 
     # Fully split-up the remaining candidates
@@ -226,7 +213,7 @@ def get_candidates(
             )
             chosen_splits = rng.choice(possible_splits)
             candidate["active"] = []
-            for (a, b) in chosen_splits:
+            for a, b in chosen_splits:
                 candidate["curscore"] += triplet_weights[bipart_rep(a, b)]
                 candidate["biparts"][a + b] = (a, b)
                 for x in (a, b):
@@ -247,7 +234,7 @@ def get_present_species(x, reverse_dictionary):
     return [
         reverse_dictionary[i]
         for i in range(len(reverse_dictionary))
-        if x & (2 ** i) == 2 ** i
+        if x & (2**i) == 2**i
     ]
 
 
@@ -423,11 +410,7 @@ def main():
                 print("Can't unpickle (wrong file?). Aborting.")
                 return 1
     except OSError:
-        print(
-            "Can't open input file {} for reading. Aborting.".format(
-                cli_flags.i
-            )
-        )
+        print("Can't open input file {} for reading. Aborting.".format(cli_flags.i))
         return 1
 
     print("* Verifying")
@@ -442,28 +425,25 @@ def main():
         return 1
 
     print(
-        "File was created using version {} of the utility.".format(
-            unpickled["version"]
-        )
+        "File was created using version {} of the utility.".format(unpickled["version"])
     )
     keys = ["reverse_dictionary", "triplet_weights", "stack"]
     reverse_dictionary, triplet_weights, stack = (unpickled[k] for k in keys)
 
     # Figure out the min score
     n_species = len(reverse_dictionary)
-    max_score = stack[2 ** n_species - 1]
+    max_score = stack[2**n_species - 1]
     print(
-        "Data for {} species and maximum triplet score {}.".format(
-            n_species, max_score
-        )
+        "Data for {} species and maximum triplet score {}.".format(n_species, max_score)
     )
     # Choose the greater of the two possible score cutoffs; if minscore
     # was not set then it's equal to -1 and is overwritten by the fraction. */
     min_score = int(max(cli_flags.fraction * max_score, cli_flags.minscore))
     print(
         textwrap.fill(
-            "* Setting minimum viable tree score to {} "
-            "(max of -m and -f flags)".format(min_score)
+            "* Setting minimum viable tree score to {} (max of -m and -f flags)".format(
+                min_score
+            )
         )
     )
 
@@ -486,22 +466,18 @@ def main():
     print(bold + underline + "Done!" + end + end)
     success_str = (
         bold
-        + "Found {} trees satisfying the given constraints. 🪆".format(
-            len(solution)
-        )
+        + "Found {} trees satisfying the given constraints. 🪆".format(len(solution))
         + end
     )
     print(success_str)
     solution.sort(key=lambda x: x["curscore"], reverse=True)
     # Record lines to output to screen, file, or both
     print("* Translating to Newick format")
-    universe = 2 ** n_species - 1
+    universe = 2**n_species - 1
     lines = []
     for candidate in solution:
         lines.append("#{}".format(candidate["curscore"]))
-        lines.append(
-            get_nwk(universe, reverse_dictionary, candidate["biparts"])
-        )
+        lines.append(get_nwk(universe, reverse_dictionary, candidate["biparts"]))
     if cli_flags.o is not None:
         try:
             with open(cli_flags.o, "w") as f:

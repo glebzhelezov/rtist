@@ -1,0 +1,9 @@
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+src = ["src"]
+# The CLI scripts have no .py extension.
+extend-include = ["scripts/*"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]
