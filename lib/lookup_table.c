@@ -1,7 +1,7 @@
+#include "lookup_table.h"
+#include "weights_omp.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include "weights_omp.h"
-#include "lookup_table.h"
 
 /* The functions in this file basically allow us to work with a base-3
  * representation of a tripartition. */
@@ -11,7 +11,7 @@
 int ipow(int a, int b) {
     int product = 1;
 
-    for (int i=0; i<b; i++) {
+    for (int i = 0; i < b; i++) {
         product *= a;
     }
 
@@ -20,21 +20,21 @@ int ipow(int a, int b) {
 
 void fill_two2three(int *two2three, int n) {
     /* Create a lookup table for powers of three. */
-    int *pows = malloc(n*sizeof(int));
+    int *pows = malloc(n * sizeof(int));
     if (pows == NULL) {
         printf("Failed to create pows array.\n");
         return;
     }
 
-    for (int i=0; i<n; i++) {
-        pows[i] = ipow(3,i);
+    for (int i = 0; i < n; i++) {
+        pows[i] = ipow(3, i);
     }
 
     /* The largest number we have to deal with is:
      * 111..(n ones)...1 = 2^n - 1 */
     int array_size = ipow(2, n);
 
-    for (int i=0; i<array_size; i++) {
+    for (int i = 0; i < array_size; i++) {
         int tot = 0;
         int k = i;
         /* Sum over set bit positions. */
@@ -42,7 +42,7 @@ void fill_two2three(int *two2three, int n) {
             /* Count the number of trailing zeroes. */
             tot += pows[__builtin_ctz(k)];
             /* Unset the least set bit. */
-            k = k&(k-1);
+            k = k & (k - 1);
         }
         two2three[i] = tot;
     }
@@ -60,7 +60,7 @@ void calculate_two2three(int **two2three, int n) {
     /* The largest number we have to deal with is:
      * 111..(n ones)...1 = 2^n - 1 */
     int array_size = ipow(2, n);
-    *two2three = malloc(array_size*sizeof(int));
+    *two2three = malloc(array_size * sizeof(int));
     if (two2three == NULL) {
         printf("Failed to allocate two2three array.\n");
         return;
@@ -76,15 +76,14 @@ void calculate_two2three(int **two2three, int n) {
 int compressed_rep(int a, int b, int *two2three) {
     int a_3 = two2three[a];
     int b_3 = two2three[b];
-    int rep1 = a_3 + 2*b_3;
-    int rep2 = 2*a_3 + b_3;
+    int rep1 = a_3 + 2 * b_3;
+    int rep2 = 2 * a_3 + b_3;
 
     /* This calculates the compressed representation. */
     int compressed = (rep1 < rep2) ? rep1 : rep2;
 
     return compressed;
 }
-
 
 /*
 int main() {
@@ -101,6 +100,6 @@ int main() {
     printf("The compressed rep is %d\n", comp);
 
     free(two2three);
-    
+
     return 0;
 }*/
