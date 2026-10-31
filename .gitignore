@@ -75,3 +75,23 @@ notebooks/
 src/mtrip.egg-info/
 *.swo
 .condaauto
+
+# Python environments and tool caches
+.venv/
+venv/
+.ruff_cache/
+.pytest_cache/
+*.egg-info/
+
+# CMake build output (in-source builds)
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+
+# Wheel builds
+wheelhouse/
+
+# Editors
+.idea/
+.vscode/
+.DS_Store
