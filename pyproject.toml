@@ -59,6 +59,10 @@ wheel.packages = ["src/mtrip"]
 build-dir = "build/{wheel_tag}"
 sdist.exclude = [".github/"]
 
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = ["-ra", "--strict-markers"]
+
 [tool.ruff]
 line-length = 88
 target-version = "py310"
