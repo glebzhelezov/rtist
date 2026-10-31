@@ -1,3 +1,7 @@
+# cython: language_level=3
+# cython: cpow=True
+# (cpow keeps Cython 0.29 semantics, where int ** int on C ints is an int;
+# Cython 3 would otherwise make it a double.)
 # Wrapper to access the popcount function provided by gcc
 cdef extern:
     int __builtin_popcount(unsigned int) nogil

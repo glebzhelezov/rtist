@@ -1,3 +1,4 @@
+# cython: language_level=3
 # Copied from SciPy source code!!!
 
 cdef unsigned long _comb_int_long(unsigned long N, unsigned long k):

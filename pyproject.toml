@@ -1,3 +1,39 @@
+[build-system]
+requires = [
+    "scikit-build-core>=0.11",
+    "cython>=3.0",
+    "cython-cmake>=0.3",
+    "cysignals",
+]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "mtrip"
+version = "0.4.0.dev0"
+description = "Find exact median triplet trees (phylogenetics)"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{ name = "Gleb Zhelezov", email = "gleb@glebzh.com" }]
+dependencies = ["cysignals"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: C",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+]
+
+[project.urls]
+Homepage = "https://github.com/glebzhelezov/rtist"
+Issues = "https://github.com/glebzhelezov/rtist/issues"
+
+[tool.scikit-build]
+minimum-version = "build-system.requires"
+wheel.packages = ["src/mtrip"]
+# Keep CMake build trees between builds so rebuilds are incremental.
+build-dir = "build/{wheel_tag}"
+sdist.exclude = [".github/"]
+
 [tool.ruff]
 line-length = 88
 target-version = "py310"

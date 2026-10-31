@@ -1,15 +1,8 @@
+# cython: language_level=3
 from cpython cimport array
 import array
 
-IF HAVE_CYSIGNALS:
-    from cysignals.signals cimport sig_on, sig_off
-ELSE:
-    # for non-POSIX systems
-    def noop():
-        return None
-    # noop = lambda: None
-    sig_on = noop
-    sig_off = noop
+from cysignals.signals cimport sig_on, sig_off
 
 
 cdef extern from "weights_omp.h":
