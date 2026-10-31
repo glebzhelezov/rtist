@@ -45,7 +45,3 @@ mtrip_cython_module(scipycomb scipy_comb.pyx)
 mtrip_cython_module(triplet_omp triplet_omp_py.pyx)
 target_link_libraries(triplet_omp PRIVATE ctriplet)
 target_include_directories(triplet_omp PRIVATE "${CYSIGNALS_DIR}")
-
-# Command-line scripts (to be replaced by entry points).
-install(PROGRAMS scripts/mtrip scripts/mtrip-combine scripts/mtrip-suboptimal
-    DESTINATION "${SKBUILD_SCRIPTS_DIR}")

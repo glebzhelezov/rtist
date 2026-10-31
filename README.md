@@ -50,3 +50,15 @@ Pass CMake options through the build frontend with `-C`:
   available.
 
 For example: `uv pip install . -Ccmake.define.MTRIP_NATIVE=ON`.
+
+## Development
+
+```bash
+$ uv sync                     # create .venv with mtrip (editable) and dev tools
+$ uv run mtrip examples/example_5tips.nwk
+$ uv run ruff format src && uv run ruff check src
+$ uv run clang-format -i lib/*.c lib/*.h
+```
+
+Edits to `.py` files take effect immediately. When a C, `.pyx` or CMake file
+changes, the next `uv run` rebuilds the compiled modules automatically.
