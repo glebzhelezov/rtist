@@ -35,8 +35,8 @@ usage: mtrip-suboptimal [-h] [-p] [-m MINSCORE] [-f FRACTION] [-n NTREES]
                         i [o]
 ...
 $ mtrip-combine
-This utility is for combining weight pickles produced by mtrip.
-Usage:	$ mtrip-combine in_pickle_1.p ... in_pickle_n.p
+error: the following arguments are required: in_pickle.p
+usage: mtrip-combine [-h] [-o OUTPUT] [-v] in_pickle.p [in_pickle.p ...]
 ....
 ```
 

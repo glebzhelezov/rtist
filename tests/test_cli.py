@@ -23,7 +23,7 @@ def tree_lines(text):
 def test_version(tmp_path):
     from mtrip import __version__
 
-    for module in ("find", "suboptimal"):
+    for module in ("find", "suboptimal", "combine"):
         result = run(module, "--version", cwd=tmp_path)
         assert result.returncode == 0
         assert result.stdout.strip() == __version__
@@ -89,3 +89,34 @@ def test_suboptimal_and_combine_from_saved_weights(tmp_path):
     )
     assert result.returncode == 0, result.stderr
     assert "#52" in result.stdout.splitlines()
+
+
+def make_weights(tmp_path, name="w.p"):
+    weights = tmp_path / name
+    result = run(
+        "find", EXAMPLES / "example_5tips.nwk", "-n", "-p", "-b", weights, cwd=tmp_path
+    )
+    assert result.returncode == 0, result.stderr
+    return weights
+
+
+def test_combine_output_option_and_default_names(tmp_path):
+    weights = make_weights(tmp_path)
+    assert (
+        run("combine", weights, weights, "-o", "both.p", cwd=tmp_path).returncode == 0
+    )
+    assert (tmp_path / "both.p").exists()
+    # Without -o, never overwrite: combined_weights.p, then combined_weights_1.p.
+    for expected in ("combined_weights.p", "combined_weights_1.p"):
+        assert run("combine", weights, weights, cwd=tmp_path).returncode == 0
+        assert (tmp_path / expected).exists()
+
+
+def test_combine_rejects_bad_inputs(tmp_path):
+    weights = make_weights(tmp_path)
+    assert run("combine", weights, cwd=tmp_path).returncode == 2  # only one input
+    not_weights = tmp_path / "not_weights.p"
+    not_weights.write_bytes(b"definitely not a pickle")
+    result = run("combine", weights, not_weights, cwd=tmp_path)
+    assert result.returncode == 1
+    assert "not_weights.p" in result.stdout + result.stderr

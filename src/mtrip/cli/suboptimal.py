@@ -1,53 +1,20 @@
-import argparse
-import sys
-import pickle
-import random
 import itertools
+import random
+import sys
 import textwrap
-import mtrip
-from mtrip.bitsnbobs import init_bipart_rep_function, get_binary_subsets
-from mtrip.bitsnbobs import popcount
 
-# Some fun colors. Should be refactored. Or removed. :-)
-bold = "\033[1m"
-underline = "\033[4m"
-italics = "\033[3m"
-end = "\033[0m"
-
-
-# Trick by Steven Berthard
-# https://groups.google.com/g/argparse-users/c/LazV_tEQvQw
-# https://stackoverflow.com/questions/4042452/display-help-message-with-python-argparse-when-script-is-called-without-any-argu
-class FriendlyParser(argparse.ArgumentParser):
-    def error(self, message):
-        sys.stderr.write("error: {}\n".format(message))
-        self.print_help()
-        sys.exit(2)
-
-
-def pickle_warning(filename):
-    print(bold + "From the Python 3 manual:" + end)
-    s = (
-        "Only unpickle data you trust. It is possible to construct "
-        "malicious pickle data which will execute arbitrary code during "
-        "unpickling. Never unpickle data that could have come from an "
-        "untrusted source, or that could have been tampered with."
-    )
-    print(textwrap.fill(s))
-    print()
-    s = "You can avoid this interactive warning in the future by using the -y flag."
-    print(textwrap.fill(s))
-    print()
-
-    verification = ""
-
-    while verification not in {"y", "n"}:
-        verification = input("Load the file {}{}{}? (y/n) ".format(bold, filename, end))
-        verification = verification.lower().strip()
-
-    if verification == "n":
-        print("Aborting.")
-        sys.exit(0)
+from mtrip.bitsnbobs import get_binary_subsets, init_bipart_rep_function, popcount
+from mtrip.cli._common import (
+    BOLD,
+    END,
+    ITALICS,
+    UNDERLINE,
+    FriendlyParser,
+    WeightsFileError,
+    add_version_argument,
+    load_weights,
+    pickle_warning,
+)
 
 
 def get_biparts(x):
@@ -348,12 +315,7 @@ def get_parser():
         default=False,
         help="don't ask for confirmation to load a pickle file",
     )
-    parser.add_argument(
-        "-v",
-        "--version",
-        action="version",
-        version=mtrip.__version__,
-    )
+    add_version_argument(parser)
 
     return parser
 
@@ -362,7 +324,7 @@ def main():
     parser = get_parser()
     cli_flags = parser.parse_args()
 
-    print(underline + "Input parameters:" + end)
+    print(UNDERLINE + "Input parameters:" + END)
     print("Input file  : {}".format(cli_flags.i))
     if cli_flags.o is not None:
         print("Output file : {}".format(cli_flags.o))
@@ -398,29 +360,12 @@ def main():
         pickle_warning(cli_flags.i)
 
     print()
-    print(underline + "Processing pickle" + end)
+    print(UNDERLINE + "Processing pickle" + END)
+    print("* Loading and verifying pickle")
     try:
-        with open(cli_flags.i, "rb") as f:
-            print("* Loading pickle")
-            try:
-                unpickled = pickle.load(f)
-            except (pickle.UnpicklingError, EOFError) as e:
-                print(e)
-                print("Can't unpickle (wrong file?). Aborting.")
-                return 1
-    except OSError:
-        print("Can't open input file {} for reading. Aborting.".format(cli_flags.i))
-        return 1
-
-    print("* Verifying")
-    # This is just to lower the probability of a nonsense file--not actually
-    # for any kind of security, etc.
-    try:
-        if unpickled["abigsecret"] != "ogurets":
-            print("This does not seem to be a valid file. Aborting.")
-            return 1
-    except Exception:
-        print("This does not seem to be a valid file. Aborting.")
+        unpickled = load_weights(cli_flags.i)
+    except WeightsFileError as e:
+        print(f"{e} Aborting.")
         return 1
 
     print(
@@ -447,7 +392,7 @@ def main():
     )
 
     print()
-    print(underline + "Finding trees" + end)
+    print(UNDERLINE + "Finding trees" + END)
     # Get the solution
     solution = get_candidates(
         triplet_weights,
@@ -462,11 +407,11 @@ def main():
     print("* Sorting by score")
 
     print()
-    print(bold + underline + "Done!" + end + end)
+    print(BOLD + UNDERLINE + "Done!" + END + END)
     success_str = (
-        bold
+        BOLD
         + "Found {} trees satisfying the given constraints. 🪆".format(len(solution))
-        + end
+        + END
     )
     print(success_str)
     solution.sort(key=lambda x: x["curscore"], reverse=True)
@@ -483,7 +428,7 @@ def main():
                 f.writelines([s + "\n" for s in lines])
             print(
                 "* {}Wrote all found trees to {}{}{}{}.".format(
-                    bold, italics, cli_flags.o, end, end
+                    BOLD, ITALICS, cli_flags.o, END, END
                 )
             )
         except IOError:

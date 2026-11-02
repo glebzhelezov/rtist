@@ -1,29 +1,20 @@
-import argparse
 import sys
-import pickle
-from time import time
 from datetime import timedelta
 from os import cpu_count
 from os.path import basename
-from mtrip.median_tree_reconstruction import median_triplet_trees
+from time import time
+
 import mtrip
-
-
-# Some fun colors. Should be refactored. Or removed. :-)
-bold = "\033[1m"
-underline = "\033[4m"
-italics = "\033[3m"
-end = "\033[0m"
-
-
-# Trick by Steven Berthard
-# https://groups.google.com/g/argparse-users/c/LazV_tEQvQw
-# https://stackoverflow.com/questions/4042452/display-help-message-with-python-argparse-when-script-is-called-without-any-argu
-class FriendlyParser(argparse.ArgumentParser):
-    def error(self, message):
-        sys.stderr.write("error: {}\n".format(message))
-        self.print_help()
-        sys.exit(2)
+from mtrip.cli._common import (
+    BOLD,
+    END,
+    ITALICS,
+    UNDERLINE,
+    FriendlyParser,
+    add_version_argument,
+    save_weights,
+)
+from mtrip.median_tree_reconstruction import median_triplet_trees
 
 
 def get_parser():
@@ -46,12 +37,7 @@ def get_parser():
         " Defaults to out_<input file>",
         default=None,
     )
-    parser.add_argument(
-        "-v",
-        "--version",
-        action="version",
-        version=mtrip.__version__,
-    )
+    add_version_argument(parser)
     parser.add_argument(
         "-t",
         "--threads",
@@ -69,13 +55,6 @@ def get_parser():
         + " string (for a small speedup)",
         default=False,
     )
-    # parser.add_argument(
-    #     "-w",
-    #     "--weights",
-    #     action="store_true",
-    #     help="compute weights array but don't compute median tree. Useful for combining different weights arrays later on",
-    #     default=False,
-    # )
     parser.add_argument(
         "-n",
         "--nosave",
@@ -114,7 +93,6 @@ def main():
     n_threads = result.threads
     novalidate = result.novalidate
     nosave = result.nosave
-    # onlyweights = result.weights
     printflag = result.print
     picklename = result.binary
 
@@ -138,7 +116,7 @@ def main():
     if n_threads is None:
         n_threads = 1
 
-    print(underline + "Input parameters:" + end)
+    print(UNDERLINE + "Input parameters:" + END)
     print("Newick file: {}".format(in_file))
     if nosave:
         print("Output file: outputting to stdout instead.")
@@ -153,7 +131,7 @@ def main():
 
     # This should be refactored, but will work for now.
     try:
-        print(underline + "Parsing input text file." + end)
+        print(UNDERLINE + "Parsing input text file." + END)
         with open(in_file, "r") as f:
             print("* Stripping Newick strings.")
             nwks = [line.strip() for line in f]
@@ -182,7 +160,7 @@ def main():
     nwks[:] = [s for s in nwks if s[0] != "#"]
 
     print("")
-    print(underline + "Finding median tree. This might take a while!" + end)
+    print(UNDERLINE + "Finding median tree. This might take a while!" + END)
     (
         median_nwks,
         reverse_dictionary,
@@ -192,7 +170,7 @@ def main():
     ) = median_triplet_trees(nwks, n_threads=n_threads, return_extra=True)
 
     print("")
-    print("{}{}Done!{}{}".format(bold, underline, end, end))
+    print("{}{}Done!{}{}".format(BOLD, UNDERLINE, END, END))
     # Save output
     if not nosave:
         try:
@@ -200,7 +178,7 @@ def main():
                 f.writelines([s + "\n" for s in median_nwks])
             print(
                 "* {}Wrote all median triplet trees to {}{}{}{}.".format(
-                    bold, italics, out_file, end, end
+                    BOLD, ITALICS, out_file, END, END
                 )
             )
         except IOError:
@@ -217,40 +195,23 @@ def main():
         print("")
         for s in median_nwks:
             print(s)
-        # print("")
 
     # Pickle stuff
     if picklename is not None:
         try:
-            with open(picklename, "wb") as f:
-                labels = [
-                    "abigsecret",
-                    "version",
-                    "nwks",
-                    "median_nwks",
-                    "reverse_dictionary",
-                    "triplet_weights",
-                    "stack",
-                    "best_biparts",
-                ]
-                to_pickle = [
-                    "ogurets",
-                    mtrip.__version__,
-                    nwks,
-                    median_nwks,
-                    reverse_dictionary,
-                    triplet_weights,
-                    stack,
-                    best_biparts,
-                ]
-
-                pickle.dump({l: t for (l, t) in zip(labels, to_pickle)}, f, protocol=4)
-
-                # for item in to_pickle:
-                #    pickle.dump(item, f, protocol=4)
+            save_weights(
+                picklename,
+                version=mtrip.__version__,
+                nwks=nwks,
+                median_nwks=median_nwks,
+                reverse_dictionary=reverse_dictionary,
+                triplet_weights=triplet_weights,
+                stack=stack,
+                best_biparts=best_biparts,
+            )
             print(
                 "* {}Pickled weights to {}{}{}{}. 🥒🏋️".format(
-                    bold, italics, picklename, end, end
+                    BOLD, ITALICS, picklename, END, END
                 )
             )
         except IOError:
