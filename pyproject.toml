@@ -74,19 +74,13 @@ test-environment = { MTRIP_EXPECT_OPENMP = "1" }
 
 [tool.cibuildwheel.macos]
 # Apple clang has no OpenMP. CI installs conda-forge's llvm-openmp, which
-# supports old macOS releases (Homebrew's only supports the runner's own),
-# and exports its prefix as MTRIP_OPENMP_PREFIX. delocate copies libomp
-# into the wheel; DYLD_LIBRARY_PATH lets it resolve libomp's @rpath name.
-# If the bundled libomp needs a newer macOS than the wheel targets, delocate
-# raises the wheel's platform tag to match, so check the wheel names.
-environment = { OpenMP_ROOT = "$MTRIP_OPENMP_PREFIX" }
+# supports macOS 11+ on both arm64 and x86_64 (Homebrew's only supports the
+# runner's own macOS), and exports its prefix as MTRIP_OPENMP_PREFIX.
+# delocate copies libomp into the wheel; DYLD_LIBRARY_PATH lets it resolve
+# libomp's @rpath name. delocate refuses to build a wheel whose bundled
+# libraries need a newer macOS than MACOSX_DEPLOYMENT_TARGET.
+environment = { OpenMP_ROOT = "$MTRIP_OPENMP_PREFIX", MACOSX_DEPLOYMENT_TARGET = "11.0" }
 repair-wheel-command = "DYLD_LIBRARY_PATH=$MTRIP_OPENMP_PREFIX/lib delocate-wheel --require-archs {delocate_archs} -w {dest_dir} -v {wheel}"
-
-[[tool.cibuildwheel.overrides]]
-# Intel Macs: support macOS 10.15+. (arm64 wheels start at macOS 11 anyway.)
-select = "*-macosx_x86_64"
-inherit.environment = "append"
-environment = { MACOSX_DEPLOYMENT_TARGET = "10.15" }
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

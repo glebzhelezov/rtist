@@ -28,7 +28,7 @@ jobs:
 
       # Homebrew's libomp only supports the runner's own macOS version, so a
       # wheel bundling it would not load on older Macs. conda-forge's
-      # llvm-openmp supports macOS 10.13+ (x86_64) and 11+ (arm64).
+      # llvm-openmp supports macOS 11+ on both architectures.
       - name: Install libomp from conda-forge (macOS)
         if: runner.os == 'macOS'
         run: |
