@@ -35,7 +35,7 @@ def get_line_names(i, nwk):
     tokens = re.findall(r"([(,])([a-zA-Z0-9]*)(?::\d*(\.\d*)?)?(?=[,)])", nwk)
     cur_names = [t[1] for t in tokens]
     if "" in cur_names:
-        raise SyntaxError("Unlabeled tip in Newick string on line {}!".format(i + 1))
+        raise SyntaxError(f"Unlabeled tip in Newick string on line {i + 1}!")
     return cur_names
 
 
@@ -305,7 +305,7 @@ def _get_all_trees(x, reverse_dictionary, best_biparts):
 
             for a_prime in a_trees:
                 for b_prime in b_trees:
-                    all_trees.append("({},{})".format(a_prime, b_prime))
+                    all_trees.append(f"({a_prime},{b_prime})")
 
     return all_trees
 

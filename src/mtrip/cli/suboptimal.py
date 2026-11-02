@@ -93,12 +93,10 @@ def get_candidates(
             )
             # Choose only the ones which could possibly satisfy our constraint
             possible_splits = list(
-                (
-                    x
-                    for x in potential_splits
-                    if sum(maximal_val(a, b) for (a, b) in x)
-                    >= min_score - candidate["curscore"]
-                )
+                x
+                for x in potential_splits
+                if sum(maximal_val(a, b) for (a, b) in x)
+                >= min_score - candidate["curscore"]
             )
             # Now add this list of possible splits and continue processing them
 
@@ -174,12 +172,10 @@ def get_candidates(
             )
             # Choose only the ones which could possibly satisfy our constraint
             possible_splits = list(
-                (
-                    x
-                    for x in potential_splits
-                    if sum(maximal_val(a, b) for (a, b) in x)
-                    >= min_score - candidate["curscore"]
-                )
+                x
+                for x in potential_splits
+                if sum(maximal_val(a, b) for (a, b) in x)
+                >= min_score - candidate["curscore"]
             )
             chosen_splits = rng.choice(possible_splits)
             candidate["active"] = []
@@ -220,7 +216,7 @@ def _get_nwk(x, reverse_dictionary, biparts):
         a_tree = _get_nwk(a, reverse_dictionary, biparts)
         b_tree = _get_nwk(b, reverse_dictionary, biparts)
 
-        nwk = "({},{})".format(a_tree, b_tree)
+        nwk = f"({a_tree},{b_tree})"
 
     return nwk
 

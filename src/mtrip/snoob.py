@@ -17,7 +17,7 @@ def get_first_n_combo(x, n):
 
 
 def get_all_snoobs(x, n_set_bits):
-    """Get all integers with n_bits set bits. Each set bit must be present in x's binary representation."""
+    """Get all integers with n_set_bits set bits, each of which is also set in x."""
     # number of set bits in x
     n_universe_bits = popcount(x)
     # the length our output should have
