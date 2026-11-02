@@ -44,6 +44,10 @@ jobs:
           echo "MTRIP_OPENMP_PREFIX=$prefix" >> "$GITHUB_ENV"
 
       - uses: pypa/cibuildwheel@v4.3.5
+        with:
+          # pyproject.toml selects the build[uv] frontend. On macOS the build
+          # runs on the runner itself (no container), so uv must be installed.
+          extras: uv
 
       - uses: actions/upload-artifact@v7
         with:
