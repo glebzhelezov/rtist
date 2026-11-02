@@ -1,3 +1,4 @@
+import logging
 import sys
 from os.path import exists
 
@@ -6,10 +7,13 @@ from mtrip import median_tree_reconstruction as mtr
 from mtrip.cli._common import (
     FriendlyParser,
     WeightsFileError,
-    add_version_argument,
+    add_common_arguments,
     load_weights,
     save_weights,
+    setup_logging,
 )
+
+log = logging.getLogger("mtrip.cli")
 
 
 def get_parser():
@@ -32,7 +36,7 @@ def get_parser():
         "Defaults to combined_weights.p, or combined_weights_<n>.p if that "
         "already exists",
     )
-    add_version_argument(parser)
+    add_common_arguments(parser)
     return parser
 
 
@@ -49,13 +53,14 @@ def default_output_name(basename="combined_weights"):
 def main():
     parser = get_parser()
     args = parser.parse_args()
+    setup_logging(args.quiet)
     if len(args.inputs) < 2:
         parser.error("at least two pickle files are needed to combine")
 
     try:
         first = load_weights(args.inputs[0])
     except WeightsFileError as e:
-        print(f"{args.inputs[0]}: {e} Aborting.")
+        log.error("%s: %s Aborting.", args.inputs[0], e)
         return 1
     main_reverse_dictionary = first["reverse_dictionary"]
     main_weights = first["triplet_weights"]
@@ -66,23 +71,23 @@ def main():
         try:
             data = load_weights(filename)
         except WeightsFileError as e:
-            print(f"{filename}: {e} Aborting.")
+            log.error("%s: %s Aborting.", filename, e)
             return 1
         if data["reverse_dictionary"] != main_reverse_dictionary:
-            print(f"{filename}: not the same species labels! Aborting.")
+            log.error("%s: not the same species labels! Aborting.", filename)
             return 1
         weights = data["triplet_weights"]
         if len(weights) != len(main_weights):
-            print(f"{filename}: weights array has the wrong length! Aborting.")
+            log.error("%s: weights array has the wrong length! Aborting.", filename)
             return 1
-        print(f"Adding weight contributions of {filename}.")
+        log.info("Adding weight contributions of %s.", filename)
         for i in range(len(main_weights)):
             main_weights[i] += weights[i]
         main_nwks += data["nwks"]
 
-    print("Computing stack")
+    log.info("Computing stack")
     main_stack, main_best_biparts = mtr.get_stack(main_weights, n_species)
-    print("Finding the median trees")
+    log.info("Finding the median trees")
     main_trees = mtr.get_all_trees(
         2**n_species - 1, main_reverse_dictionary, main_best_biparts
     )
@@ -100,9 +105,9 @@ def main():
             best_biparts=main_best_biparts,
         )
     except OSError as e:
-        print(f"Failed to write combined weights pickle: {e}")
+        log.error("Failed to write combined weights pickle: %s", e)
         return 1
-    print(f"Wrote combined weights pickle to {output}.")
+    log.info("Wrote combined weights pickle to %s.", output)
     return 0
 
 

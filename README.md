@@ -4,6 +4,17 @@
 
 Run the commands `mtrip`, `mtrip-suboptimal`, `mtrip-combine` without any arguments to get information on how to use them. The first one is for finding the median tree(s), the second one is for finding the suboptimal trees, and the last one is for combining weights!
 
+The trees are the only thing written to standard output; progress and other
+messages go to standard error. So you can pipe or redirect the results:
+
+```bash
+$ mtrip genes.nwk -n -p > median_trees.nwk      # trees only, no file named out_*
+$ mtrip genes.nwk -n -p -q | some_other_tool    # -q: no progress messages
+```
+
+Messages are colored only on a terminal, and never when the `NO_COLOR`
+environment variable is set.
+
 ## Building from source
 
 You need a C compiler and CMake 3.15 or newer. The build fetches its Python

@@ -64,7 +64,7 @@ void fill_compressed_weight_representation(
     int *subsets, int *start_i, int *end_i, int *left_sets, int *right_sets,
     int *bipart_weights, int n_subsets, int n_species,
     int *weights, /* Must be allocated with 0 in each entry. */
-    int *two2three, int n_threads) {
+    int *two2three, int n_threads, int verbosity) {
     /* Iterate over all the (sub)bi-partitions. */
     int loop_progress = 0;
 #ifndef _OPENMP
@@ -81,8 +81,9 @@ void fill_compressed_weight_representation(
         int thread_id_private = 0;
 #endif
         /* Print out number of threads */
-        if (thread_id_private == 0) {
-            fprintf(stderr, "Using %d threads.\n", n_threads_assigned);
+        if (verbosity >= 1 && thread_id_private == 0) {
+            fprintf(stderr, "Using %d thread%s.\n", n_threads_assigned,
+                    n_threads_assigned == 1 ? "" : "s");
         }
         /* Calculate the progress this thread is making, to eventually add
          * to the progress bar. */
@@ -161,7 +162,7 @@ void fill_compressed_weight_representation(
                 loop_progress = loop_progress + counter_private;
                 counter_private = 0;
                 /* Only update the progress bar by the master thread */
-                if (thread_id_private == 0) {
+                if (verbosity >= 2 && thread_id_private == 0) {
                     fprintf(stderr, "\r%d/%d complete (%.2f%%)", loop_progress,
                             n_subsets, (100.0 * loop_progress) / n_subsets);
                     fflush(stderr);
@@ -169,6 +170,9 @@ void fill_compressed_weight_representation(
             }
         }
     }
-    fprintf(stderr, "\r%d/%d complete (%.2f%%)\n", n_subsets, n_subsets, 100.0);
-    fflush(stderr);
+    if (verbosity >= 1) {
+        fprintf(stderr, "%s%d/%d complete (%.2f%%)\n",
+                verbosity >= 2 ? "\r" : "", n_subsets, n_subsets, 100.0);
+        fflush(stderr);
+    }
 }

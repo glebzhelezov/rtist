@@ -1,5 +1,5 @@
+import logging
 import sys
-from datetime import timedelta
 from os import cpu_count
 from os.path import basename
 from time import time
@@ -7,14 +7,17 @@ from time import time
 import mtrip
 from mtrip.cli._common import (
     BOLD,
-    END,
     ITALICS,
     UNDERLINE,
     FriendlyParser,
-    add_version_argument,
+    add_common_arguments,
     save_weights,
+    setup_logging,
+    style,
 )
 from mtrip.median_tree_reconstruction import median_triplet_trees
+
+log = logging.getLogger("mtrip.cli")
 
 
 def get_parser():
@@ -37,7 +40,7 @@ def get_parser():
         " Defaults to out_<input file>",
         default=None,
     )
-    add_version_argument(parser)
+    add_common_arguments(parser)
     parser.add_argument(
         "-t",
         "--threads",
@@ -66,7 +69,7 @@ def get_parser():
         "-p",
         "--print",
         action="store_true",
-        help="print the output to the screen",
+        help="print the median trees to stdout",
         default=False,
     )
     parser.add_argument(
@@ -86,81 +89,67 @@ def main():
     tic = time()
 
     parser = get_parser()
-    result = parser.parse_args()
+    args = parser.parse_args()
+    setup_logging(args.quiet)
 
-    in_file = result.i
-    out_file = result.o
-    n_threads = result.threads
-    novalidate = result.novalidate
-    nosave = result.nosave
-    printflag = result.print
-    picklename = result.binary
-
-    if nosave and not printflag:
-        print(
-            "The flag --nosave cannot be used without --print, otherwise "
-            "the output goes nowhere. Aborting."
+    if args.nosave and not args.print:
+        parser.error(
+            "--nosave cannot be used without --print, otherwise the output goes nowhere"
         )
-        return 1
+    if not (args.threads >= 1 or args.threads == -1):
+        parser.error("the number of threads must be a positive integer or -1")
 
-    if not (n_threads >= 1 or n_threads == -1):
-        print("The number of threads must be a positive integer or -1.")
-        return 1
+    in_file = args.i
+    out_file = args.o if args.o is not None else "out_" + basename(in_file)
+    n_threads = args.threads if args.threads != -1 else (cpu_count() or 1)
+    print_trees = args.print
 
-    if out_file is None:
-        out_file = "out_" + basename(in_file)
-
-    # Set default maximum number of threads.
-    if n_threads == -1:
-        n_threads = cpu_count()
-    if n_threads is None:
-        n_threads = 1
-
-    print(UNDERLINE + "Input parameters:" + END)
-    print("Newick file: {}".format(in_file))
-    if nosave:
-        print("Output file: outputting to stdout instead.")
+    log.info(style("Input parameters:", UNDERLINE))
+    log.info("Newick file: %s", in_file)
+    if args.nosave:
+        log.info("Output file: outputting to stdout instead.")
     else:
-        print("Output file: {}".format(out_file))
+        log.info("Output file: %s", out_file)
+    log.info("Max threads: %d", n_threads)
+    if args.novalidate:
+        log.info("Not validating Newick strings!")
+    log.info("")
 
-    print("Max threads: {}".format(n_threads))
-    if novalidate:
-        print("Not validating Newick strings!")
-
-    print("")
-
-    # This should be refactored, but will work for now.
+    log.info(style("Parsing input text file.", UNDERLINE))
     try:
-        print(UNDERLINE + "Parsing input text file." + END)
-        with open(in_file, "r") as f:
-            print("* Stripping Newick strings.")
-            nwks = [line.strip() for line in f]
-    except IOError:
-        print("Can't open input file {} for reading. Aborting.".format(in_file))
+        with open(in_file) as f:
+            log.info("* Stripping Newick strings.")
+            lines = [line.strip() for line in f]
+    except OSError:
+        log.error("Can't open input file %s for reading. Aborting.", in_file)
         return 1
 
-    if not novalidate:
-        print("* Checking for matching parentheses and semicolon in each GT.")
-        for i, string in enumerate(nwks):
-            # Ignore comments
-            if string[0] == "#":
-                continue
+    # Skip blank lines and comments (lines starting with #), keeping line
+    # numbers for error messages.
+    numbered = [(i + 1, s) for i, s in enumerate(lines) if s and s[0] != "#"]
+
+    if not args.novalidate:
+        log.info("* Checking for matching parentheses and semicolon in each GT.")
+        for line_no, s in numbered:
             # Need to put in a stricter validator here
-            if string[-1] != ";":
-                print(f"Line {i + 1} doesn't end of a semicolon! Aborting!")
+            if s[-1] != ";":
+                log.error("Line %d doesn't end with a semicolon! Aborting!", line_no)
                 return 1
-            if string.count("(") != string.count(")"):
-                print(
-                    f"Line {i + 1} doesn't have an equal number of left and "
-                    "right brackets! Aborting!"
+            if s.count("(") != s.count(")"):
+                log.error(
+                    "Line %d doesn't have an equal number of left and right "
+                    "brackets! Aborting!",
+                    line_no,
                 )
                 return 1
 
-    # Get rid of comments
-    nwks[:] = [s for s in nwks if s[0] != "#"]
+    nwks = [s for _, s in numbered]
+    if not nwks:
+        log.error("No Newick strings found in %s. Aborting.", in_file)
+        return 1
 
-    print("")
-    print(UNDERLINE + "Finding median tree. This might take a while!" + END)
+    log.info("")
+    log.info(style("Finding median tree. This might take a while!", UNDERLINE))
     (
         median_nwks,
         reverse_dictionary,
@@ -169,38 +158,33 @@ def main():
         best_biparts,
     ) = median_triplet_trees(nwks, n_threads=n_threads, return_extra=True)
 
-    print("")
-    print("{}{}Done!{}{}".format(BOLD, UNDERLINE, END, END))
-    # Save output
-    if not nosave:
+    log.info("")
+    log.info(style("Done!", BOLD, UNDERLINE))
+    if not args.nosave:
         try:
             with open(out_file, "w") as f:
-                f.writelines([s + "\n" for s in median_nwks])
-            print(
-                "* {}Wrote all median triplet trees to {}{}{}{}.".format(
-                    BOLD, ITALICS, out_file, END, END
-                )
+                f.writelines(s + "\n" for s in median_nwks)
+            log.info(
+                "* %s%s.",
+                style("Wrote all median triplet trees to ", BOLD),
+                style(out_file, BOLD, ITALICS),
             )
-        except IOError:
-            print("Can't write to {}. Outputting to stdout instead.".format(out_file))
-            # If can't write to file, output to screen as a last resort
-            printflag = True
+        except OSError:
+            log.error("Can't write to %s. Outputting to stdout instead.", out_file)
+            # If we can't write to the file, print the trees as a last resort.
+            print_trees = True
 
-    toc = time()
-    dt = timedelta(seconds=toc - tic)
+    log.info("🤖💬 Beep boop, finished in %.2f seconds.", time() - tic)
 
-    print("🤖💬 Beep boop, finished in {:.2f} seconds.".format(dt.total_seconds()))
-
-    if printflag:
-        print("")
+    # The results: the only thing written to stdout.
+    if print_trees:
         for s in median_nwks:
             print(s)
 
-    # Pickle stuff
-    if picklename is not None:
+    if args.binary is not None:
         try:
             save_weights(
-                picklename,
+                args.binary,
                 version=mtrip.__version__,
                 nwks=nwks,
                 median_nwks=median_nwks,
@@ -209,15 +193,17 @@ def main():
                 stack=stack,
                 best_biparts=best_biparts,
             )
-            print(
-                "* {}Pickled weights to {}{}{}{}. 🥒🏋️".format(
-                    BOLD, ITALICS, picklename, END, END
-                )
+        except OSError:
+            log.error(
+                "Can't write to %s. Aborting serializing the processed data.",
+                args.binary,
             )
-        except IOError:
-            print(
-                f"Can't write to {picklename}. Aborting serializing the processed data."
-            )
+            return 1
+        log.info(
+            "* %s%s. 🥒🏋️",
+            style("Pickled weights to ", BOLD),
+            style(args.binary, BOLD, ITALICS),
+        )
 
     return 0
 

@@ -1,16 +1,16 @@
+import logging
 import re
-import mtrip.triplet_omp as triplet_omp
-import mtrip.scipycomb as scipycomb
-import mtrip.snoob as snoob
-from multiprocessing import Pool
-from collections import deque, Counter
+from collections import Counter, deque
 from itertools import product
-from time import perf_counter
-from functools import partial
+from multiprocessing import Pool
 from random import Random
-from textwrap import fill
-from mtrip.bitsnbobs import popcount, get_binary_subsets
-from mtrip.bitsnbobs import init_bipart_rep_function
+
+import mtrip.snoob as snoob
+import mtrip.triplet_omp as triplet_omp
+from mtrip.bitsnbobs import get_binary_subsets, init_bipart_rep_function, popcount
+
+# Progress messages; the command-line tools send these to stderr.
+logger = logging.getLogger(__name__)
 
 # I know I shouldn't do this :(
 # Only use multiprocessing for basic parsing if the list of nwks is quite long
@@ -44,7 +44,7 @@ def get_names(gts_nwks, n_threads=1):
     names = set([])
 
     if len(gts_nwks) > __long_nwk_list__:
-        print("    Many Newick strings, so doing this in parallel.")
+        logger.info("    Many Newick strings, so doing this in parallel.")
 
         with Pool(n_threads) as p:
             for res in p.starmap(get_line_names, enumerate(gts_nwks)):
@@ -164,7 +164,7 @@ def get_weights_parallel(gts_nwks, dictionary, n_threads=1):
 
 
 def get_stack(bipartition_weights, n_species):
-    print("* Finding maximal possible weight of each bipartition.")
+    logger.info("* Finding maximal possible weight of each bipartition.")
     # The "stack" gives the best weight of each subset
     f = init_bipart_rep_function(n_species)
     # Score of each triple
@@ -194,7 +194,6 @@ def get_stack(bipartition_weights, n_species):
                         max_score = score
                         best_bipart_list.clear()
                         best_bipart_list.append((subset, complement))
-            # print('updating', combo)
             # best_bipart[combo] = max_bipart
             stack[combo] = max_score
 
@@ -208,17 +207,17 @@ def process_nwks(nwks, n_threads=1):
     nwks - list of Newick strings
     n_threads - n threads to use (default=1)
     """
-    print("* Parsing Newick strings and recording bipartitions in GTs.")
+    logger.info("* Parsing Newick strings and recording bipartitions in GTs.")
     # Get rid of unnecessary info in Newick string
     nwks_simplified = []
     if len(nwks) > __long_nwk_list__:
-        print("    Many Newick strings, so doing this in parallel.")
+        logger.info("    Many Newick strings, so doing this in parallel.")
         with Pool(n_threads) as p:
             nwks_simplified.extend(p.map(simplify_nwk, nwks))
     else:
         nwks_simplified = [simplify_nwk(s) for s in nwks]
     # Map each name to an integer
-    print("* Finding all unique names.")
+    logger.info("* Finding all unique names.")
     names, dictionary, reverse_dictionary = get_names(
         nwks_simplified, n_threads=n_threads
     )
@@ -227,23 +226,22 @@ def process_nwks(nwks, n_threads=1):
     # Warn user of impeding doom; this is a pretty low bar though, 20 is more
     # reasonable on modern hardware.
     if n_species > 18:
-        print(
-            fill(
-                "Warning: attempting to find exact tree with {} tips. The "
-                "computation might run out of memory, or take an unreasonable "
-                "amount of time.".format(n_species)
-            )
+        logger.warning(
+            "Warning: attempting to find exact tree with %d tips. The "
+            "computation might run out of memory, or take an unreasonable "
+            "amount of time.",
+            n_species,
         )
 
     # Get the weights of the bipartitions in the GTs
-    print("* Calculating each GT bipartition's weight.")
+    logger.info("* Calculating each GT bipartition's weight.")
     # weights = get_weights(nwks_simplified, dictionary)
     weights = get_weights_parallel(nwks_simplified, dictionary, n_threads=n_threads)
     # Get the biparts by the subset (i.e. (a+b)->[(a,b),...]
-    print("* Matching bipartitions to subsets.")
+    logger.info("* Matching bipartitions to subsets.")
     biparts_by_subset = get_subset_biparts(weights)
     # Arrange data to be easily accessible by C code
-    print("* Forming arrays for computations.")
+    logger.info("* Forming arrays for computations.")
     subsets = []
     start_i = []
     end_i = []
@@ -268,7 +266,7 @@ def process_nwks(nwks, n_threads=1):
             position += 1
         end_i.append(position)
     # Get the weights of all possible bipartitions
-    print("* Finding each possible bipartition's weight:")
+    logger.info("* Finding each possible bipartition's weight:")
     triplet_weights = triplet_omp.py_compressed_weight_rep(
         subsets,
         start_i,
@@ -279,7 +277,6 @@ def process_nwks(nwks, n_threads=1):
         n_species,
         n_threads=n_threads,
     )
-    # print("Done!")
 
     return triplet_weights, dictionary, reverse_dictionary
 
@@ -340,10 +337,10 @@ def median_triplet_trees(nwks, n_threads=1, return_extra=False):
     # This assumes each GT has all the species, so this is actually not a
     # sharp upper bound!
     theoretical_bound = len(nwks) * n_species * (n_species - 1) * (n_species - 2) // 6
-    print(
-        "Best possible triplet count is {}, out of a maximum of {}.".format(
-            stack[x], theoretical_bound
-        )
+    logger.info(
+        "Best possible triplet count is %d, out of a maximum of %d.",
+        stack[x],
+        theoretical_bound,
     )
 
     trees = get_all_trees(x, reverse_dictionary, best_biparts)

@@ -1,4 +1,5 @@
 import itertools
+import logging
 import random
 import sys
 import textwrap
@@ -6,15 +7,18 @@ import textwrap
 from mtrip.bitsnbobs import get_binary_subsets, init_bipart_rep_function, popcount
 from mtrip.cli._common import (
     BOLD,
-    END,
     ITALICS,
     UNDERLINE,
     FriendlyParser,
     WeightsFileError,
-    add_version_argument,
+    add_common_arguments,
     load_weights,
     pickle_warning,
+    setup_logging,
+    style,
 )
+
+log = logging.getLogger("mtrip.cli")
 
 
 def get_biparts(x):
@@ -41,7 +45,7 @@ def get_candidates(
     def maximal_val(a, b):
         return triplet_weights[bipart_rep(a, b)] + stack[a] + stack[b]
 
-    print("* Finding initial splits")
+    log.info("* Finding initial splits")
     # > Find the topmost splits
     # These are the topmost splits
     candidates = [
@@ -75,7 +79,7 @@ def get_candidates(
     candidates = new_candidates
 
     # Burn in
-    print("* Beginning burn-in")
+    log.info("* Beginning burn-in")
     while (
         len(candidates) != 0 and len(candidates) + len(finished_candidates) < n_burnin
     ):
@@ -143,15 +147,15 @@ def get_candidates(
     # paths uniformly
     n_candidates = len(candidates) + len(finished_candidates)
     if n_candidates < n_trees:
-        print(
+        log.info(
             textwrap.fill(
-                "* Could only find {} trees satisfying the constraint ({} "
-                "requested)".format(n_candidates, n_trees)
+                f"* Could only find {n_candidates} trees satisfying the "
+                f"constraint ({n_trees} requested)"
             )
         )
         chosen_paths = candidates + finished_candidates
     else:
-        print("* Picking random subset of tree candidates")
+        log.info("* Picking random subset of tree candidates")
         chosen_paths = rng.choices(
             candidates + finished_candidates,
             k=n_trees,
@@ -161,7 +165,7 @@ def get_candidates(
 
     # These are all guaranteed to work out, so let's go through them,
     # choosing random splits along the way.
-    print("* Refining all splits")
+    log.info("* Refining all splits")
     for candidate in chosen_paths:
         while len(candidate["active"]) != 0:
             # Look at every possible combo of subpartitions
@@ -261,7 +265,7 @@ def get_parser():
         "-p",
         "--print",
         action="store_true",
-        help="print the output to the screen",
+        help="also print the trees to stdout when writing an output file",
         default=False,
     )
 
@@ -315,136 +319,124 @@ def get_parser():
         default=False,
         help="don't ask for confirmation to load a pickle file",
     )
-    add_version_argument(parser)
+    add_common_arguments(parser)
 
     return parser
 
 
 def main():
     parser = get_parser()
-    cli_flags = parser.parse_args()
+    args = parser.parse_args()
+    setup_logging(args.quiet)
 
-    print(UNDERLINE + "Input parameters:" + END)
-    print("Input file  : {}".format(cli_flags.i))
-    if cli_flags.o is not None:
-        print("Output file : {}".format(cli_flags.o))
+    if args.minscore != -1 and args.minscore < 0:
+        parser.error("invalid minimum score")
+    if not 0 < args.fraction <= 1:
+        parser.error("invalid minimum fraction")
+    if not args.ntrees > 0:
+        parser.error("invalid number of requested trees")
+    if args.burnin is None:
+        args.burnin = 4 * args.ntrees
+    if args.burnin < args.ntrees:
+        parser.error("burnin number less than requested number of trees")
+    # Without an output file, the trees go to stdout.
+    print_trees = args.print or args.o is None
+
+    log.info(style("Input parameters:", UNDERLINE))
+    log.info("Input file  : %s", args.i)
+    if args.o is not None:
+        log.info("Output file : %s", args.o)
     else:
-        print("Output file : outputting to stdout instead")
-        cli_flags.print = True
-    print("Use stdout  :", cli_flags.print)
-    if cli_flags.minscore != -1:
-        if cli_flags.minscore < 0:
-            print("Invalid minimum score. Aborting.")
-            return 1
-        print("Min score   :", cli_flags.minscore)
-    if cli_flags.fraction != 1:
-        if not 0 < cli_flags.fraction <= 1:
-            print("Invalid minimum fraction. Aborting.")
-            return 1
-        print("Min fraction:", cli_flags.fraction)
-    if not cli_flags.ntrees > 0:
-        print("Invalid number of requested trees. Aborting.")
-        return 1
-    print("Max n trees :", cli_flags.ntrees)
-    if cli_flags.burnin is None:
-        cli_flags.burnin = 4 * cli_flags.ntrees
-    if cli_flags.burnin < cli_flags.ntrees:
-        print("Burnin number less than requested number of trees. Aborting.")
-        return
-    print("Burnin count:", cli_flags.burnin)
-    print("RNG seed    :", cli_flags.seed)
+        log.info("Output file : outputting to stdout instead")
+    log.info("Use stdout  : %s", print_trees)
+    if args.minscore != -1:
+        log.info("Min score   : %d", args.minscore)
+    if args.fraction != 1:
+        log.info("Min fraction: %s", args.fraction)
+    log.info("Max n trees : %d", args.ntrees)
+    log.info("Burnin count: %d", args.burnin)
+    log.info("RNG seed    : %d", args.seed)
 
     # Warn the user about the pickle, it is the moral thing to do!
-    if not cli_flags.yes:
-        print()
-        pickle_warning(cli_flags.i)
+    if not args.yes:
+        print(file=sys.stderr)
+        pickle_warning(args.i)
 
-    print()
-    print(UNDERLINE + "Processing pickle" + END)
-    print("* Loading and verifying pickle")
+    log.info("")
+    log.info(style("Processing pickle", UNDERLINE))
+    log.info("* Loading and verifying pickle")
     try:
-        unpickled = load_weights(cli_flags.i)
+        unpickled = load_weights(args.i)
     except WeightsFileError as e:
-        print(f"{e} Aborting.")
+        log.error("%s Aborting.", e)
         return 1
 
-    print(
-        "File was created using version {} of the utility.".format(unpickled["version"])
-    )
-    keys = ["reverse_dictionary", "triplet_weights", "stack"]
-    reverse_dictionary, triplet_weights, stack = (unpickled[k] for k in keys)
+    log.info("File was created using version %s of the utility.", unpickled["version"])
+    reverse_dictionary = unpickled["reverse_dictionary"]
+    triplet_weights = unpickled["triplet_weights"]
+    stack = unpickled["stack"]
 
     # Figure out the min score
     n_species = len(reverse_dictionary)
     max_score = stack[2**n_species - 1]
-    print(
-        "Data for {} species and maximum triplet score {}.".format(n_species, max_score)
-    )
+    log.info("Data for %d species and maximum triplet score %d.", n_species, max_score)
     # Choose the greater of the two possible score cutoffs; if minscore
-    # was not set then it's equal to -1 and is overwritten by the fraction. */
-    min_score = int(max(cli_flags.fraction * max_score, cli_flags.minscore))
-    print(
+    # was not set then it's equal to -1 and is overwritten by the fraction.
+    min_score = int(max(args.fraction * max_score, args.minscore))
+    log.info(
         textwrap.fill(
-            "* Setting minimum viable tree score to {} (max of -m and -f flags)".format(
-                min_score
-            )
+            f"* Setting minimum viable tree score to {min_score} "
+            "(max of -m and -f flags)"
         )
     )
 
-    print()
-    print(UNDERLINE + "Finding trees" + END)
-    # Get the solution
+    log.info("")
+    log.info(style("Finding trees", UNDERLINE))
     solution = get_candidates(
         triplet_weights,
         stack,
         reverse_dictionary,
         min_score,
-        cli_flags.ntrees,
-        cli_flags.burnin,
-        seed=cli_flags.seed,
+        args.ntrees,
+        args.burnin,
+        seed=args.seed,
     )
-    # Sort of descending score
-    print("* Sorting by score")
-
-    print()
-    print(BOLD + UNDERLINE + "Done!" + END + END)
-    success_str = (
-        BOLD
-        + "Found {} trees satisfying the given constraints. 🪆".format(len(solution))
-        + END
-    )
-    print(success_str)
+    log.info("* Sorting by score")
     solution.sort(key=lambda x: x["curscore"], reverse=True)
-    # Record lines to output to screen, file, or both
-    print("* Translating to Newick format")
+
+    log.info("")
+    log.info(style("Done!", BOLD, UNDERLINE))
+    log.info(
+        style(f"Found {len(solution)} trees satisfying the given constraints. 🪆", BOLD)
+    )
+    # Each tree is preceded by a comment line with its score.
+    log.info("* Translating to Newick format")
     universe = 2**n_species - 1
     lines = []
     for candidate in solution:
-        lines.append("#{}".format(candidate["curscore"]))
+        lines.append(f"#{candidate['curscore']}")
         lines.append(get_nwk(universe, reverse_dictionary, candidate["biparts"]))
-    if cli_flags.o is not None:
-        try:
-            with open(cli_flags.o, "w") as f:
-                f.writelines([s + "\n" for s in lines])
-            print(
-                "* {}Wrote all found trees to {}{}{}{}.".format(
-                    BOLD, ITALICS, cli_flags.o, END, END
-                )
-            )
-        except IOError:
-            print(
-                "Could not write to {}. Outputting to stdout instead.".format(
-                    cli_flags.o
-                )
-            )
-            cli_flags.print = True
 
-    if cli_flags.print:
-        print("* Writing output to stdout.")
-    if cli_flags.print:
-        print()
+    if args.o is not None:
+        try:
+            with open(args.o, "w") as f:
+                f.writelines(s + "\n" for s in lines)
+            log.info(
+                "* %s%s.",
+                style("Wrote all found trees to ", BOLD),
+                style(args.o, BOLD, ITALICS),
+            )
+        except OSError:
+            log.error("Could not write to %s. Outputting to stdout instead.", args.o)
+            print_trees = True
+
+    # The results: the only thing written to stdout.
+    if print_trees:
+        log.info("* Writing output to stdout.")
         for s in lines:
             print(s)
+
+    return 0
 
 
 if __name__ == "__main__":

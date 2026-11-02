@@ -1,8 +1,12 @@
 # cython: language_level=3
 from cpython cimport array
 import array
+import logging
+import sys
 
 from cysignals.signals cimport sig_on, sig_off
+
+logger = logging.getLogger(__name__)
 
 
 cdef extern from "weights_omp.h":
@@ -23,6 +27,7 @@ cdef extern from "weights_omp.h" nogil:
         int *weights,
         int *two2three,
         int n_threads,
+        int verbosity,
     )
 
 
@@ -82,12 +87,14 @@ def py_compressed_weight_rep(subsets, start_i, end_i, biparts_a, biparts_b,
     cdef int[::1] biparts_b_memview = ar_biparts_b
     cdef int[::1] bipart_weights_memview = ar_bipart_weights
 
-    threads_str = 'thread'
-    if n_threads > 1:
-        threads_str += 's'
+    # The C code writes progress straight to stderr. Match the logging level:
+    # nothing unless INFO is enabled, and the live counter only on a terminal.
+    cdef int verbosity = 0
+    if logger.isEnabledFor(logging.INFO):
+        verbosity = 2 if sys.stderr.isatty() else 1
 
-    print("Starting parallel comptuation with a max of "
-          "{} {}.".format(n_threads, threads_str))
+    logger.info("Starting parallel computation with a max of %d thread%s.",
+                n_threads, "" if n_threads == 1 else "s")
     sig_on()
     fill_compressed_weight_representation(
         &subsets_memview[0],
@@ -101,6 +108,7 @@ def py_compressed_weight_rep(subsets, start_i, end_i, biparts_a, biparts_b,
         &weights_memview[0],
         &two2three_memview[0],
         n_threads,
+        verbosity,
     )
     sig_off()
 

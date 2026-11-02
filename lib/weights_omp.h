@@ -24,12 +24,15 @@ int n_common_triplets(int a, int b, int c, int d);
  *
  * weights must hold 2 * 3^(n_species - 1) entries, all zero on entry.
  * two2three must have been filled by fill_two2three(two2three, n_species).
- * n_threads is ignored when built without OpenMP. */
+ * n_threads is ignored when built without OpenMP.
+ *
+ * Progress goes to stderr, depending on verbosity: 0 prints nothing, 1 the
+ * thread count and a final summary line, 2 also a live progress counter. */
 void fill_compressed_weight_representation(int *subsets, int *start_i,
                                            int *end_i, int *left_sets,
                                            int *right_sets, int *bipart_weights,
                                            int n_subsets, int n_species,
                                            int *weights, int *two2three,
-                                           int n_threads);
+                                           int n_threads, int verbosity);
 
 #endif /* MTRIP_WEIGHTS_OMP_H */
