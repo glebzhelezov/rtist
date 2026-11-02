@@ -154,10 +154,10 @@ def get_candidates(
         chosen_paths = candidates + finished_candidates
     else:
         log.info("* Picking random subset of tree candidates")
-        chosen_paths = rng.choices(
-            candidates + finished_candidates,
-            k=n_trees,
-        )
+        # Sample without replacement: distinct candidates always refine to
+        # distinct trees, while picking one candidate twice would print the
+        # same tree twice.
+        chosen_paths = rng.sample(candidates + finished_candidates, k=n_trees)
 
     # Fully split-up the remaining candidates
 

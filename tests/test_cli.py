@@ -182,11 +182,32 @@ def test_suboptimal_and_combine_from_saved_weights(tmp_path):
     assert "#52" in result.stdout.splitlines()
 
 
-def make_weights(tmp_path, name="w.p"):
+def test_suboptimal_trees_are_distinct(tmp_path):
+    """Sampling 30 of the candidates must not pick any of them twice."""
+    weights = make_weights(tmp_path, example="large_example.nwk")
+    for seed in range(3):
+        result = run(
+            "suboptimal",
+            "-y",
+            "-q",
+            "-f",
+            "0.9",
+            "-n",
+            30,
+            "-s",
+            seed,
+            weights,
+            cwd=tmp_path,
+        )
+        assert result.returncode == 0, result.stderr
+        trees = tree_lines(result.stdout)
+        assert len(trees) == 30
+        assert len(set(trees)) == 30
+
+
+def make_weights(tmp_path, name="w.p", example="example_5tips.nwk"):
     weights = tmp_path / name
-    result = run(
-        "find", EXAMPLES / "example_5tips.nwk", "-n", "-p", "-b", weights, cwd=tmp_path
-    )
+    result = run("find", EXAMPLES / example, "-n", "-p", "-b", weights, cwd=tmp_path)
     assert result.returncode == 0, result.stderr
     return weights
 
