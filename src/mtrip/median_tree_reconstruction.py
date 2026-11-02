@@ -25,8 +25,10 @@ def simplify_nwk(s):
     s = s.replace(" ", "")
     # Get rid of non-leaf names
     s = re.sub(r"\)[^,)]+", ")", s)
-    # Get rid of branch lengths
-    s = re.sub(r":[0-9]*[.]?[0-9]*", "", s)
+    # Get rid of branch lengths: everything from ':' to the next delimiter, so
+    # that 1e-06, 2.5E-3 or -0.1 are removed whole, not just their leading
+    # digits.
+    s = re.sub(r":[^,();]*", "", s)
 
     return s
 

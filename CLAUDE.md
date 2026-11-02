@@ -101,5 +101,3 @@ whose score is within a fraction of the best.
 ## Known limitations
 
 - 20 or more taxa overflow the 32-bit indices in C (2·3^19 > INT_MAX).
-- `simplify_nwk` doesn't handle branch lengths in scientific notation
-  (`A:1e-06` leaves the taxon name as `Ae-06`).

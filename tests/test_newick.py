@@ -10,6 +10,15 @@ def test_simplify_strips_lengths_labels_and_semicolon():
     assert mtr.simplify_nwk(s) == "((A,B),C)"
 
 
+@pytest.mark.parametrize(
+    "length", ["1e-06", "2.5E-3", "1.0e+2", "-0.1", "3.", ".5", "1", ""]
+)
+def test_simplify_strips_any_branch_length(length):
+    """Branch lengths in any number format (IQ-TREE and RAxML write 1e-06)."""
+    s = f"((A:{length},B:{length})90:{length},C:{length}):{length};"
+    assert mtr.simplify_nwk(s) == "((A,B),C)"
+
+
 def test_get_names_is_sorted_and_consistent():
     names, dictionary, reverse = mtr.get_names(["((C,A),B)", "((D,A),B)"])
     assert reverse == ["A", "B", "C", "D"]
