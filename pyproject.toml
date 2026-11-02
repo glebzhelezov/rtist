@@ -13,6 +13,8 @@ version = "0.4.0.dev0"
 description = "Find exact median triplet trees (phylogenetics)"
 readme = "README.md"
 requires-python = ">=3.10"
+license = "GPL-3.0-only"
+license-files = ["LICENSE"]
 authors = [{ name = "Gleb Zhelezov", email = "gleb@glebzh.com" }]
 dependencies = ["cysignals"]
 classifiers = [
