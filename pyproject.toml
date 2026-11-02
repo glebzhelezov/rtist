@@ -9,7 +9,7 @@ build-backend = "scikit_build_core.build"
 
 [project]
 name = "mtrip"
-version = "0.4.0.dev0"
+version = "0.4.0"
 description = "Find exact median triplet trees (phylogenetics)"
 readme = "README.md"
 requires-python = ">=3.10"

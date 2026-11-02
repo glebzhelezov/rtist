@@ -189,7 +189,7 @@ wheels = [
 
 [[package]]
 name = "mtrip"
-version = "0.4.0.dev0"
+version = "0.4.0"
 source = { editable = "." }
 dependencies = [
     { name = "cysignals", version = "1.12.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
