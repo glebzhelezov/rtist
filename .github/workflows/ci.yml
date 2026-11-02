@@ -9,9 +9,12 @@ on:
   push:
   pull_request:
   workflow_dispatch:
+  workflow_call: # publish.yml runs this first; a failure blocks the upload
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  # When publish.yml calls this workflow, github.workflow is "Publish"; the
+  # suffix keeps that group apart from the caller's own jobs.
+  group: ${{ github.workflow }}-ci-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:

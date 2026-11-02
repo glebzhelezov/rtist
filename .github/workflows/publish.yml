@@ -12,7 +12,8 @@
 # Settings -> Environments.
 #
 # The sdist is built here; the wheels (Linux and macOS, x86_64 and arm64) come
-# from wheels.yml, called below. Every `dist-*` artifact gets uploaded.
+# from wheels.yml, called below. Every `dist-*` artifact gets uploaded, but
+# only after ci.yml (lint and tests) and every wheel build have passed.
 
 name: Publish
 
@@ -47,12 +48,16 @@ jobs:
           name: dist-sdist
           path: dist/*
 
+  ci:
+    uses: ./.github/workflows/ci.yml
+
   wheels:
     uses: ./.github/workflows/wheels.yml
 
   publish:
     name: Upload to ${{ inputs.target }}
-    needs: [build-sdist, wheels]
+    # Nothing is uploaded unless lint, every test job and every wheel passed.
+    needs: [ci, build-sdist, wheels]
     runs-on: ubuntu-latest
     environment:
       name: ${{ inputs.target }}
