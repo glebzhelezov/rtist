@@ -1,13 +1,13 @@
 # mtrip
 
-Find **exact median triplet trees**: given a set of rooted gene trees, find
-every species tree that shares the largest possible number of rooted triplets
-with them. This is the method called RTIST in the paper below. The package and
-its commands are called `mtrip`.
+mtrip finds exact median triplet trees. You give it a set of rooted gene trees,
+and it finds every species tree that shares as many rooted triplets with them
+as possible. The paper below calls the method RTIST; the package and its
+commands are called `mtrip`.
 
 > Gleb Zhelezov and James H. Degnan. [*Trying out a million genes to find the
 > perfect pair with RTIST*](https://academic.oup.com/bioinformatics/article/38/14/3565/6596045).
-> Bioinformatics 38(14):3565–3573, 2022.
+> Bioinformatics 38(14):3565-3573, 2022.
 
 ## Installation
 
@@ -21,12 +21,12 @@ or run it without installing, using [uv](https://docs.astral.sh/uv/):
 uvx mtrip genes.nwk
 ```
 
-Prebuilt wheels are available for Linux (x86_64 and arm64, including Alpine)
-and macOS 11+ (Intel and Apple Silicon), for Python 3.10 and newer. They
-include OpenMP, so the main computation runs on all CPU cores with nothing
-else to install. On Windows, use [WSL](https://learn.microsoft.com/windows/wsl/).
-On other systems pip builds from source; see
-[Building from source](#building-from-source).
+pip installs a prebuilt wheel on Linux (x86_64 and arm64, Alpine included) and
+on macOS 11 or newer (Intel and Apple Silicon), for Python 3.10 and up. The
+wheels come with OpenMP built in, so mtrip uses all your CPU cores and you
+don't need to install anything else. On Windows, use
+[WSL](https://learn.microsoft.com/windows/wsl/). Anywhere else, pip compiles
+mtrip from source (see [Building from source](#building-from-source)).
 
 ## Quick start
 
@@ -49,8 +49,9 @@ Best possible triplet count is 26, out of a maximum of 50.
 ((A,B),(C,(D,E)));
 ```
 
-Both trees are median triplet trees: each shares 26 triplets with the gene
-trees, and no tree shares more. `mtrip` always reports *all* optimal trees.
+Each of these trees shares 26 triplets with the gene trees, and no tree shares
+more, so both are median triplet trees. When several trees tie for the best
+score, mtrip reports all of them.
 
 ## Commands
 
@@ -63,14 +64,14 @@ mtrip genes.nwk -n -p           # print the trees instead of saving them
 mtrip genes.nwk -b weights.p    # also save the weights, for the commands below
 ```
 
-Input: one Newick string per line. Branch lengths and internal node labels are
-ignored, and blank lines and lines starting with `#` are skipped. Use
-`-t N` to limit the number of threads (default: all CPUs).
+The input file has one Newick string per line. mtrip ignores branch lengths
+and internal node labels, and skips blank lines and lines starting with `#`.
+By default it uses all CPUs; `-t N` limits it to N threads.
 
 ### `mtrip-suboptimal`: near-optimal trees
 
-From a weights file saved with `mtrip -b`, sample trees whose score is close
-to the best one:
+This samples trees whose score is close to the best one, using a weights file
+saved with `mtrip -b`:
 
 ```console
 $ mtrip-suboptimal weights.p -f 0.9 -n 5
@@ -83,9 +84,10 @@ $ mtrip-suboptimal weights.p -f 0.9 -n 5
 ...
 ```
 
-Each tree is preceded by its score, highest first. `-f` sets the minimum score
-as a fraction of the best (default 0.99), or `-m` as an absolute number; `-n`
-caps the number of trees (default 100), and `-s` seeds the random sampling.
+The trees come out highest score first, each with its score on the line
+above. Set the cutoff with `-f`, as a fraction of the best score (default
+0.99), or with `-m`, as an absolute score. `-n` caps the number of trees
+(default 100), and `-s` seeds the random sampling.
 
 ### `mtrip-combine`: combine runs
 
@@ -106,24 +108,24 @@ All inputs must have the same taxa.
 > code. Only load weights files you created or trust. `mtrip-suboptimal` asks
 > before loading one; `-y` skips the question.
 
-Every command takes `-h` for the full list of options, `-v` for its version,
-and `-q` for quiet mode.
+All three commands take `-h` (the full list of options), `-v` (version) and
+`-q` (quiet).
 
 ## Output and scripting
 
-- **Only results go to standard output**: the trees from `-p`, and
-  `mtrip-suboptimal`'s scored trees. Progress and messages go to standard
-  error, so redirecting and piping work:
+The commands write only their results to standard output: the trees from
+`-p`, and the scored trees from `mtrip-suboptimal`. Progress and other messages
+go to standard error, so you can redirect or pipe the results:
 
-  ```bash
-  mtrip genes.nwk -n -p > median_trees.nwk
-  mtrip genes.nwk -n -p -q | some_other_tool    # -q: no progress messages
-  ```
+```bash
+mtrip genes.nwk -n -p > median_trees.nwk
+mtrip genes.nwk -n -p -q | some_other_tool    # -q: no progress messages
+```
 
-- Messages are colored only on a terminal, and never when the `NO_COLOR`
-  environment variable is set.
-- Exit codes: `0` on success, `1` on errors (unreadable input, a malformed
-  Newick string, ...), `2` on invalid command-line arguments.
+Messages are in color on a terminal, unless the `NO_COLOR` environment
+variable is set. The exit code is `0` on success, `1` on an error such as
+unreadable input or a malformed Newick string, and `2` on invalid command-line
+arguments.
 
 ## Limits
 
@@ -151,7 +153,7 @@ pip install .
 Build options, passed through pip (or `uv pip`) with `-C`:
 
 - `-Ccmake.define.MTRIP_NATIVE=ON` tunes the code for the CPU you're building
-  on. Faster, but the result only runs on CPUs like yours.
+  on. It runs faster, but only on CPUs like yours.
 - `-Ccmake.define.MTRIP_OPENMP=OFF` builds without OpenMP even if it's
   available.
 
@@ -170,9 +172,9 @@ uv run clang-format -i lib/*.c lib/*.h     # C formatting
 Edits to `.py` files take effect immediately. When a C, `.pyx` or CMake file
 changes, the next `uv run` rebuilds the compiled modules.
 
-GitHub Actions runs the lint checks and tests on Linux and macOS (x86_64 and
-arm64) for every push, and builds and tests the wheels. Releases are uploaded
-to PyPI by the `Publish` workflow through Trusted Publishing.
+On every push, GitHub Actions runs the lint checks and the tests on Linux and
+macOS (x86_64 and arm64), and builds and tests the wheels. The `Publish`
+workflow uploads releases to PyPI using Trusted Publishing.
 
 ## Citation
 
