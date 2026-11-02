@@ -62,10 +62,10 @@ build-dir = "build/{wheel_tag}"
 sdist.exclude = [".github/"]
 
 [tool.cibuildwheel]
-# CPython only, glibc Linux and macOS. Free-threaded (3.14t) and musl builds
-# are left out for now.
+# CPython only: Linux (glibc and musl, e.g. Alpine) and macOS. Free-threaded
+# builds (3.14t) are left out for now.
 build = "cp310-* cp311-* cp312-* cp313-* cp314-* cp315-*"
-skip = "*t-* *-musllinux_*"
+skip = "*t-*"
 build-frontend = "build[uv]"
 test-requires = "pytest"
 test-sources = ["tests", "examples"]
