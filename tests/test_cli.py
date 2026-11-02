@@ -1,8 +1,10 @@
 """Smoke tests for the three commands, run as subprocesses."""
 
+import os
 import subprocess
 import sys
 
+import pytest
 from common import EXAMPLES
 
 
@@ -27,6 +29,20 @@ def test_version(tmp_path):
         result = run(module, "--version", cwd=tmp_path)
         assert result.returncode == 0
         assert result.stdout.strip() == __version__
+
+
+@pytest.mark.skipif(
+    "MTRIP_EXPECT_OPENMP" not in os.environ,
+    reason="set MTRIP_EXPECT_OPENMP=1 (or 0) to check how mtrip was built",
+)
+def test_openmp_build(tmp_path):
+    """CI sets MTRIP_EXPECT_OPENMP, so a build that silently lost OpenMP fails."""
+    result = run(
+        "find", EXAMPLES / "example_5tips.nwk", "-n", "-p", "-t", 2, cwd=tmp_path
+    )
+    assert result.returncode == 0, result.stderr
+    parallel = "Using 2 threads." in result.stderr
+    assert parallel == (os.environ["MTRIP_EXPECT_OPENMP"] == "1"), result.stderr
 
 
 def test_find_writes_output_file(tmp_path):

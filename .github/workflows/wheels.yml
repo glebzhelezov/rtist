@@ -1,0 +1,51 @@
+# Build and test the binary wheels that go to PyPI, with cibuildwheel.
+# Settings live in pyproject.toml under [tool.cibuildwheel].
+#
+# Each runner builds natively for its own platform, so there's no emulation.
+# publish.yml calls this workflow and uploads the `dist-wheels-*` artifacts.
+
+name: Wheels
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  wheels:
+    name: Wheels (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, macos-15-intel]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+
+      # Homebrew's libomp only supports the runner's own macOS version, so a
+      # wheel bundling it would not load on older Macs. conda-forge's
+      # llvm-openmp supports macOS 10.13+ (x86_64) and 11+ (arm64).
+      - name: Install libomp from conda-forge (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          case "$(uname -m)" in
+            arm64) platform=osx-arm64 ;;
+            x86_64) platform=osx-64 ;;
+          esac
+          curl -fsSL "https://micro.mamba.pm/api/micromamba/$platform/latest" \
+            | tar -xj -C "$RUNNER_TEMP" bin/micromamba
+          prefix="$RUNNER_TEMP/openmp"
+          MAMBA_ROOT_PREFIX="$RUNNER_TEMP/mamba" "$RUNNER_TEMP/bin/micromamba" \
+            create --yes --prefix "$prefix" -c conda-forge llvm-openmp
+          echo "MTRIP_OPENMP_PREFIX=$prefix" >> "$GITHUB_ENV"
+
+      - uses: pypa/cibuildwheel@v4.3.5
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: dist-wheels-${{ matrix.os }}
+          path: wheelhouse/*.whl

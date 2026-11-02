@@ -1,0 +1,64 @@
+# Lint, then build from source and run the tests on every supported platform.
+#
+# Wheels (what users will `pip install`) are built and tested separately, in
+# wheels.yml.
+
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.3.3
+      # --only-group dev: just the tools, without building mtrip itself.
+      - run: uv run --locked --only-group dev ruff check
+      - run: uv run --locked --only-group dev ruff format --check
+      - run: uv run --locked --only-group dev clang-format --dry-run -Werror lib/*.c lib/*.h
+
+  test:
+    name: Test (${{ matrix.os }}, Python ${{ matrix.python }})
+    strategy:
+      fail-fast: false
+      matrix:
+        # Linux and macOS, x86_64 and arm64, all on native runners.
+        os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, macos-15-intel]
+        # Oldest and newest supported; wheels.yml covers the ones between.
+        python: ["3.10", "3.14"]
+    runs-on: ${{ matrix.os }}
+    env:
+      UV_PYTHON: ${{ matrix.python }}
+      MTRIP_EXPECT_OPENMP: "1"
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install libomp (macOS)
+        if: runner.os == 'macOS'
+        run: brew install libomp
+      - uses: astral-sh/setup-uv@v10.3.3
+      - run: uv sync --locked
+      - run: uv run --locked pytest
+
+  test-serial:
+    name: Test without OpenMP
+    runs-on: ubuntu-latest
+    env:
+      SKBUILD_CMAKE_DEFINE: MTRIP_OPENMP=OFF
+      MTRIP_EXPECT_OPENMP: "0"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.3.3
+      - run: uv sync --locked
+      - run: uv run --locked pytest

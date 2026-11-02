@@ -11,10 +11,8 @@
 # and create matching `pypi` / `testpypi` environments under the GitHub repo's
 # Settings -> Environments.
 #
-# The build job currently produces only the sdist. Wheels for Linux and macOS
-# (x86_64 + arm64) will be built by cibuildwheel in the CI workflow, which
-# uploads them as `dist-*` artifacts. The publish job already collects every
-# `dist-*` artifact, so wheels will be picked up once those jobs exist.
+# The sdist is built here; the wheels (Linux and macOS, x86_64 and arm64) come
+# from wheels.yml, called below. Every `dist-*` artifact gets uploaded.
 
 name: Publish
 
@@ -35,36 +33,39 @@ jobs:
     name: Build sdist
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v10.3.3
 
       - name: Build sdist
         run: uv build --sdist --out-dir dist
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: dist-sdist
           path: dist/*
 
+  wheels:
+    uses: ./.github/workflows/wheels.yml
+
   publish:
     name: Upload to ${{ inputs.target }}
-    needs: [build-sdist]
+    needs: [build-sdist, wheels]
     runs-on: ubuntu-latest
     environment:
       name: ${{ inputs.target }}
     permissions:
       id-token: write # required for Trusted Publishing
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           pattern: dist-*
           path: dist
           merge-multiple: true
 
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v10.3.3
 
       - name: Upload to TestPyPI
         if: inputs.target == 'testpypi'
