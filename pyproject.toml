@@ -3,20 +3,31 @@ requires = [
     "scikit-build-core>=0.11",
     "cython>=3.0",
     "cython-cmake>=0.3",
-    "cysignals",
+    # cysignals 1.12.6 changed the ABI that sig_on() compiles into our module:
+    # a module built against one side breaks with cysignals from the other
+    # (ImportError, or a SystemError on Ctrl-C). 1.12.6 also has no wheels for
+    # Linux arm64 or Intel macOS. So: 1.12.x up to 1.12.5 below Python 3.13,
+    # 1.13+ (wheels everywhere) from 3.13 on. Keep the build and runtime
+    # requirements below identical.
+    "cysignals>=1.12.3,<1.12.6; python_version < '3.13'",
+    "cysignals>=1.13; python_version >= '3.13'",
 ]
 build-backend = "scikit_build_core.build"
 
 [project]
 name = "mtrip"
-version = "0.4.0"
+version = "0.4.1"
 description = "Find exact median triplet trees (phylogenetics)"
 readme = "README.md"
 requires-python = ">=3.10"
 license = "GPL-3.0-only"
 license-files = ["LICENSE"]
 authors = [{ name = "Gleb Zhelezov", email = "gleb@glebzh.com" }]
-dependencies = ["cysignals"]
+dependencies = [
+    # Same pins as in [build-system]; see the comment there.
+    "cysignals>=1.12.3,<1.12.6; python_version < '3.13'",
+    "cysignals>=1.13; python_version >= '3.13'",
+]
 classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: C",
@@ -71,8 +82,12 @@ test-requires = "pytest"
 test-sources = ["tests", "examples"]
 test-command = "pytest -ra tests"
 # The wheels bundle OpenMP (libgomp on Linux, libomp on macOS); fail the
-# build if one ever comes out single-threaded.
-test-environment = { MTRIP_EXPECT_OPENMP = "1" }
+# build if one ever comes out single-threaded. Install the test dependencies
+# only from wheels, as a user without a compiler would: a cysignals pin that
+# has no wheel for some platform then fails here instead of after release.
+# (uv pip reads no env var for this, hence the config file.)
+before-test = '''printf '[pip]\nonly-binary = [":all:"]\n' > /tmp/mtrip-uv.toml'''
+test-environment = { MTRIP_EXPECT_OPENMP = "1", UV_CONFIG_FILE = "/tmp/mtrip-uv.toml" }
 
 [tool.cibuildwheel.macos]
 # Apple clang has no OpenMP. CI installs conda-forge's llvm-openmp, which

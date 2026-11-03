@@ -97,6 +97,12 @@ whose score is within a fraction of the best.
   tests check this against brute force.
 - The version lives only in `pyproject.toml`; `mtrip.__version__` reads it from
   the installed metadata.
+- cysignals' `sig_on()` is compiled into `triplet_omp`, and its ABI changed in
+  1.12.6, so the module only works with cysignals from the side it was built
+  against. The cysignals requirements in `[build-system]` and `dependencies`
+  must stay identical (split at Python 3.13; see the comment in
+  pyproject.toml). The wheel tests install dependencies from wheels only, so a
+  pin without wheels for some platform fails there.
 
 ## Known limitations
 
